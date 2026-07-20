@@ -1,0 +1,3639 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: Current user and profile
+  - name: courses
+    description: Course management and enrollment
+  - name: assignments
+    description: Assignments within courses
+  - name: submissions
+    description: Assignment submissions and grading
+  - name: quizzes
+    description: Course quizzes and quiz attempts
+  - name: materials
+    description: Course materials shared with students
+  - name: messaging
+    description: In-app course messaging and announcements
+  - name: dashboard
+    description: Dashboard summaries
+  - name: grades
+    description: Grades, course progress and leaderboards
+  - name: admin
+    description: Admin-only endpoints
+  - name: cohorts
+    description: Teacher-managed student cohorts
+  - name: groups
+    description: Course-scoped student groups for group assignments
+  - name: Storage
+    description: Object storage upload and serving endpoints.
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get the current authenticated user (provisions on first call)
+      responses:
+        "200":
+          description: The current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update the current user's profile or role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /teachers/{teacherId}/profile:
+    get:
+      operationId: getTeacherProfile
+      tags: [users]
+      summary: Get a teacher's public profile by id
+      parameters:
+        - name: teacherId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Teacher profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherProfile"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List courses for the current user (owned if teacher, enrolled if student)
+      responses:
+        "200":
+          description: Courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create a course (teacher)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/join:
+    post:
+      operationId: joinCourse
+      tags: [courses]
+      summary: Join a course by invite code (student)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinCourseInput"
+      responses:
+        "200":
+          description: Joined course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          description: Invalid invite code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Get a course by id
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}/students:
+    get:
+      operationId: listCourseStudents
+      tags: [courses]
+      summary: List students enrolled in a course
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /courses/{courseId}/invite:
+    post:
+      operationId: inviteStudent
+      tags: [courses]
+      summary: Invite a student by email (records an invite)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteInput"
+      responses:
+        "201":
+          description: Invite recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+
+  /courses/{courseId}/invites:
+    get:
+      operationId: listInvites
+      tags: [courses]
+      summary: List the course roster of invited student emails (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Roster of invited students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invite"
+
+  /courses/{courseId}/invites/{inviteId}:
+    delete:
+      operationId: removeInvite
+      tags: [courses]
+      summary: Remove a student from the course roster (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Invite removed
+
+  /courses/{courseId}/students/{studentId}:
+    delete:
+      operationId: removeCourseStudent
+      tags: [courses]
+      summary: Remove an enrolled student from the course and roster (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Student removed
+        "404":
+          description: Course or enrollment not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}/plan:
+    get:
+      operationId: getCoursePlan
+      tags: [courses]
+      summary: Get the hour-wise course plan (locked days hide details for students)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursePlan"
+    put:
+      operationId: updateCoursePlan
+      tags: [courses]
+      summary: Replace the course plan (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CoursePlanInput"
+      responses:
+        "200":
+          description: Updated course plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursePlan"
+
+  /courses/{courseId}/assignments:
+    get:
+      operationId: listAssignments
+      tags: [assignments]
+      summary: List assignments in a course (includes current user's submission status)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Assignment"
+    post:
+      operationId: createAssignment
+      tags: [assignments]
+      summary: Create an assignment (teacher)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentInput"
+      responses:
+        "201":
+          description: Created assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+
+  /assignments/{assignmentId}:
+    get:
+      operationId: getAssignment
+      tags: [assignments]
+      summary: Get an assignment by id
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      responses:
+        "200":
+          description: Assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateAssignment
+      tags: [assignments]
+      summary: Update an assignment and its targeted audience (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentUpdate"
+      responses:
+        "200":
+          description: Updated assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "403":
+          description: Not the course teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /assignments/{assignmentId}/submissions:
+    get:
+      operationId: listAssignmentSubmissions
+      tags: [submissions]
+      summary: List submissions for an assignment (teacher grading queue)
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      responses:
+        "200":
+          description: Submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+    post:
+      operationId: createSubmission
+      tags: [submissions]
+      summary: Submit an assignment (student). Triggers AI grading and plagiarism check.
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmissionInput"
+      responses:
+        "201":
+          description: Created submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+
+  /assignments/{assignmentId}/similarity:
+    post:
+      operationId: runSimilarityCheck
+      tags: [submissions]
+      summary: Re-run pairwise similarity detection for an assignment (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+      responses:
+        "200":
+          description: Similarity recomputed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimilarityRunResult"
+        "403":
+          description: Not the course teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /similarities/{similarityId}/dismissal:
+    patch:
+      operationId: setSimilarityDismissal
+      tags: [submissions]
+      summary: Dismiss or restore a flagged similarity pair (teacher only)
+      parameters:
+        - name: similarityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimilarityDismissalInput"
+      responses:
+        "200":
+          description: Updated dismissal state
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id:
+                    type: integer
+                  dismissedAt:
+                    type: ["string", "null"]
+                    format: date-time
+        "403":
+          description: Not the course teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Similarity pair not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}/similarities:
+    get:
+      operationId: listCourseSimilarities
+      tags: [submissions]
+      summary: List all flagged similarity pairs across a course's assignments (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Flagged similarity pairs across all assignments in the course
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseSimilarityPair"
+        "403":
+          description: Not the course teacher
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /submissions/mine:
+    get:
+      operationId: listMySubmissions
+      tags: [submissions]
+      summary: List the current student's submissions
+      responses:
+        "200":
+          description: Submissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Submission"
+
+  /submissions/{submissionId}:
+    get:
+      operationId: getSubmission
+      tags: [submissions]
+      summary: Get a submission by id
+      parameters:
+        - $ref: "#/components/parameters/SubmissionId"
+      responses:
+        "200":
+          description: Submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /submissions/{submissionId}/comparison/{otherSubmissionId}:
+    get:
+      operationId: getSubmissionComparison
+      tags: [submissions]
+      summary: Side-by-side comparison of two flagged submissions with matched passages (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/SubmissionId"
+        - name: otherSubmissionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Comparison with highlight ranges
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimilarityComparison"
+        "403":
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /submissions/{submissionId}/grade:
+    patch:
+      operationId: gradeSubmission
+      tags: [submissions]
+      summary: Grade a submission (teacher) — accept AI or override
+      parameters:
+        - $ref: "#/components/parameters/SubmissionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GradeInput"
+      responses:
+        "200":
+          description: Graded submission
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Submission"
+
+  /courses/{courseId}/quizzes:
+    get:
+      operationId: listQuizzes
+      tags: [quizzes]
+      summary: List quizzes in a course (students see published only, with their attempt status)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quiz"
+    post:
+      operationId: createQuiz
+      tags: [quizzes]
+      summary: Create a quiz with its questions (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizInput"
+      responses:
+        "201":
+          description: Created quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{quizId}:
+    get:
+      operationId: getQuiz
+      tags: [quizzes]
+      summary: Get a quiz with questions (correct answers hidden from students until results are published)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      responses:
+        "200":
+          description: Quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    put:
+      operationId: updateQuiz
+      tags: [quizzes]
+      summary: Update a quiz and replace its questions (teacher only; questions locked once attempts exist)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizInput"
+      responses:
+        "200":
+          description: Updated quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "409":
+          description: Questions cannot change after students have taken the quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteQuiz
+      tags: [quizzes]
+      summary: Delete a quiz and its questions/attempts (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      responses:
+        "204":
+          description: Deleted
+
+  /quizzes/{quizId}/publish:
+    post:
+      operationId: publishQuiz
+      tags: [quizzes]
+      summary: Publish a quiz so students can take it (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      responses:
+        "200":
+          description: Published quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{quizId}/publish-results:
+    post:
+      operationId: publishQuizResults
+      tags: [quizzes]
+      summary: Finalize scores and release results to students (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      responses:
+        "200":
+          description: Quiz with results published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{quizId}/attempts:
+    get:
+      operationId: listQuizAttempts
+      tags: [quizzes]
+      summary: List all attempts for a quiz (teacher results view)
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      responses:
+        "200":
+          description: Attempts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuizAttempt"
+    post:
+      operationId: createQuizAttempt
+      tags: [quizzes]
+      summary: Submit quiz answers (enrolled student, one attempt). Multiple-choice auto-scored; short answers AI-scored.
+      parameters:
+        - $ref: "#/components/parameters/QuizId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizAttemptInput"
+      responses:
+        "201":
+          description: Created attempt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+        "409":
+          description: Already attempted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /quiz-attempts/{attemptId}/grade:
+    patch:
+      operationId: gradeQuizAttempt
+      tags: [quizzes]
+      summary: Adjust per-question scores for an attempt (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/AttemptId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizGradeInput"
+      responses:
+        "200":
+          description: Updated attempt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizAttempt"
+
+  /courses/{courseId}/materials:
+    get:
+      operationId: listCourseMaterials
+      tags: [materials]
+      summary: List course materials (teacher and enrolled students)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseMaterial"
+    post:
+      operationId: createCourseMaterial
+      tags: [materials]
+      summary: Post a course material (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseMaterialInput"
+      responses:
+        "201":
+          description: Created material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseMaterial"
+
+  /courses/{courseId}/materials/unseen:
+    get:
+      operationId: getUnseenMaterialsCount
+      tags: [materials]
+      summary: Count materials posted since the current user last viewed the Materials tab
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Unseen materials count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnseenMaterialsCount"
+
+  /courses/{courseId}/materials/seen:
+    post:
+      operationId: markMaterialsSeen
+      tags: [materials]
+      summary: Mark all course materials as seen for the current user
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "204":
+          description: Marked as seen
+
+  /materials/{materialId}:
+    patch:
+      operationId: updateCourseMaterial
+      tags: [materials]
+      summary: Update a course material (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/MaterialId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseMaterialInput"
+      responses:
+        "200":
+          description: Updated material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseMaterial"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteCourseMaterial
+      tags: [materials]
+      summary: Delete a course material (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/MaterialId"
+      responses:
+        "204":
+          description: Material deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}/messages:
+    get:
+      operationId: listMessages
+      tags: [messaging]
+      summary: List messages in a course thread for the current user
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messaging]
+      summary: Send a message or announcement in a course
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Created message
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/read:
+    post:
+      operationId: markMessagesRead
+      tags: [messaging]
+      summary: Mark messages as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkReadInput"
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /inbox:
+    get:
+      operationId: getInbox
+      tags: [messaging]
+      summary: Get inbox thread summaries with unread counts for the current user
+      responses:
+        "200":
+          description: Inbox threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InboxThread"
+
+  /courses/{courseId}/my-stats:
+    get:
+      operationId: getCourseMyStats
+      tags: [grades]
+      summary: Per-student course stats (overall score, progress, submission summary) for the current user
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course stats for the current student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseStudentStats"
+        "404":
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /courses/{courseId}/leaderboard:
+    get:
+      operationId: getCourseLeaderboard
+      tags: [grades]
+      summary: Leaderboard of enrolled students ranked by overall score (names only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Course leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
+        "404":
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Role-aware dashboard summary for the current user
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /courses/{courseId}/sessions:
+    get:
+      operationId: listClassSessions
+      tags: [sessions]
+      summary: List class sessions for a course
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Class sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClassSession"
+    post:
+      operationId: createClassSession
+      tags: [sessions]
+      summary: Schedule a class session (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassSessionInput"
+      responses:
+        "201":
+          description: Created class session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassSession"
+
+  /sessions/{sessionId}:
+    patch:
+      operationId: updateClassSession
+      tags: [sessions]
+      summary: Update a class session (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassSessionInput"
+      responses:
+        "200":
+          description: Updated class session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassSession"
+    delete:
+      operationId: deleteClassSession
+      tags: [sessions]
+      summary: Delete a class session (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /calendar:
+    get:
+      operationId: getCalendar
+      tags: [sessions]
+      summary: Class sessions and assignment due dates across the user's courses
+      responses:
+        "200":
+          description: Calendar data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarData"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Recent notifications with unread count for the current user
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsPage"
+
+  /notifications/read:
+    post:
+      operationId: markNotificationsRead
+      tags: [notifications]
+      summary: Mark notifications as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkNotificationsReadInput"
+      responses:
+        "200":
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /admin/logs:
+    get:
+      operationId: listActivityLogs
+      tags: [admin]
+      summary: List activity logs (admin only)
+      parameters:
+        - name: user
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by user id or email substring
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [info, warn, error]
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by action prefix (e.g. "course")
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        "200":
+          description: Paginated activity logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLogPage"
+
+  /admin/users:
+    get:
+      operationId: listUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: All user accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /admin/users/{id}:
+    patch:
+      operationId: adminUpdateUser
+      tags: [admin]
+      summary: Update a user's role or admin flag (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /admin/teacher-invites:
+    get:
+      operationId: listTeacherInvites
+      tags: [admin]
+      summary: List pending teacher invites (admin only)
+      responses:
+        "200":
+          description: Pending teacher invites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeacherInvite"
+    post:
+      operationId: createTeacherInvite
+      tags: [admin]
+      summary: Add a teacher by email ahead of sign-in (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeacherInviteInput"
+      responses:
+        "201":
+          description: The created invite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherInvite"
+        "400":
+          description: Invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Invite or account already exists for this email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /admin/teacher-invites/{id}:
+    delete:
+      operationId: revokeTeacherInvite
+      tags: [admin]
+      summary: Revoke a pending teacher invite (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Invite revoked
+        "404":
+          description: Invite not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /admin/users/{id}/remove-teacher:
+    post:
+      operationId: removeTeacherAccess
+      tags: [admin]
+      summary: Remove teacher access from a user and deactivate their courses (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The demoted user and course impact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemoveTeacherResult"
+        "400":
+          description: Invalid request (e.g. self-demotion or not a teacher)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      description: |
+        Returns a presigned GCS URL for direct upload. The client sends JSON
+        metadata here, then uploads the file directly to the returned URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Relative file path within the public search paths.
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve public object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an object entity from PRIVATE_OBJECT_DIR
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object dir.
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Object not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /cohorts:
+    get:
+      operationId: listCohorts
+      tags: [cohorts]
+      summary: List the current teacher's cohorts with member counts
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [year, course, subject, elective, custom]
+      responses:
+        "200":
+          description: Cohorts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Cohort"
+    post:
+      operationId: createCohort
+      tags: [cohorts]
+      summary: Create a cohort (teacher only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CohortInput"
+      responses:
+        "201":
+          description: Created cohort
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cohort"
+
+  /cohorts/{cohortId}:
+    get:
+      operationId: getCohort
+      tags: [cohorts]
+      summary: Get one of the current teacher's cohorts
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+      responses:
+        "200":
+          description: Cohort
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cohort"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    patch:
+      operationId: updateCohort
+      tags: [cohorts]
+      summary: Rename or edit a cohort (owning teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CohortUpdate"
+      responses:
+        "200":
+          description: Updated cohort
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cohort"
+    delete:
+      operationId: deleteCohort
+      tags: [cohorts]
+      summary: Delete a cohort and its memberships (owning teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+      responses:
+        "204":
+          description: Deleted
+
+  /cohorts/{cohortId}/members:
+    get:
+      operationId: listCohortMembers
+      tags: [cohorts]
+      summary: List a cohort's member students (owning teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: addCohortMember
+      tags: [cohorts]
+      summary: Add a student to a cohort by id or email (owning teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCohortMemberInput"
+      responses:
+        "201":
+          description: Member added (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: No registered student matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /cohorts/{cohortId}/members/{studentId}:
+    delete:
+      operationId: removeCohortMember
+      tags: [cohorts]
+      summary: Remove a student from a cohort (owning teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CohortId"
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Removed
+
+  /teacher/students:
+    get:
+      operationId: listMyStudents
+      tags: [cohorts]
+      summary: List all students enrolled in any of the current teacher's courses
+      responses:
+        "200":
+          description: Students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /courses/{courseId}/invite-cohort:
+    post:
+      operationId: inviteCohort
+      tags: [cohorts]
+      summary: Add all members of a cohort to a course roster, skipping duplicates (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteCohortInput"
+      responses:
+        "200":
+          description: Result counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteCohortResult"
+
+  /admin/coordinator-assignments:
+    get:
+      operationId: listCoordinatorAssignments
+      tags: [admin]
+      summary: List all coordinator-to-course assignments plus available courses (admin only)
+      responses:
+        "200":
+          description: Assignments and assignable courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoordinatorAssignmentsOverview"
+
+  /admin/users/{id}/coordinator-courses:
+    put:
+      operationId: setCoordinatorCourses
+      tags: [admin]
+      summary: Replace the set of courses a coordinator oversees (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetCoordinatorCoursesInput"
+      responses:
+        "200":
+          description: Updated set of assigned course ids
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetCoordinatorCoursesResult"
+        "400":
+          description: Target user is not a course coordinator
+        "404":
+          description: User not found
+
+  /coordinator/courses:
+    get:
+      operationId: listCoordinatorCourses
+      tags: [oversight]
+      summary: List the courses assigned to the current course coordinator
+      responses:
+        "200":
+          description: Assigned courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OversightCourse"
+        "403":
+          description: Not a course coordinator
+
+  /oversight/courses:
+    get:
+      operationId: listOversightCourses
+      tags: [oversight]
+      summary: List all courses (dean and course coordinator, read-only)
+      responses:
+        "200":
+          description: All courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OversightCourse"
+        "403":
+          description: Not a dean or course coordinator
+
+  /oversight/professors:
+    get:
+      operationId: listOversightProfessors
+      tags: [oversight]
+      summary: List all professors and course coordinators (dean only, read-only)
+      responses:
+        "200":
+          description: All professors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OversightProfessor"
+        "403":
+          description: Not a dean
+
+  /oversight/integrity:
+    get:
+      operationId: listOversightIntegrity
+      tags: [oversight]
+      summary: Integrity flag summary across all courses (dean only, read-only)
+      responses:
+        "200":
+          description: Per-course flagged similarity summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OversightIntegrityItem"
+        "403":
+          description: Not a dean
+
+  /feedback:
+    get:
+      operationId: listFeedback
+      tags: [feedback]
+      summary: List feedback notes (received; deans also see sent)
+      responses:
+        "200":
+          description: Feedback notes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackList"
+    post:
+      operationId: createFeedback
+      tags: [feedback]
+      summary: Send a feedback note to a professor or course coordinator (dean only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackCreate"
+      responses:
+        "201":
+          description: Created feedback note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackNote"
+        "403":
+          description: Not a dean
+
+  /feedback/{feedbackId}/read:
+    post:
+      operationId: markFeedbackRead
+      tags: [feedback]
+      summary: Mark a received feedback note as read
+      parameters:
+        - name: feedbackId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated feedback note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackNote"
+        "404":
+          description: Not found or not the recipient
+
+  /courses/{courseId}/groups:
+    get:
+      operationId: listCourseGroups
+      tags: [groups]
+      summary: List groups in a course (teacher sees all; students see the groups they belong to)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      responses:
+        "200":
+          description: Groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CourseGroup"
+    post:
+      operationId: createCourseGroup
+      tags: [groups]
+      summary: Create a student group in a course (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/CourseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseGroupInput"
+      responses:
+        "201":
+          description: Created group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseGroup"
+
+  /groups/{groupId}:
+    patch:
+      operationId: updateCourseGroup
+      tags: [groups]
+      summary: Update a group's name, membership, or leader (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseGroupUpdate"
+      responses:
+        "200":
+          description: Updated group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseGroup"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteCourseGroup
+      tags: [groups]
+      summary: Delete a group (teacher only)
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+      responses:
+        "204":
+          description: Deleted
+
+  /assignments/{assignmentId}/groups/{groupId}/tasks:
+    get:
+      operationId: listGroupTasks
+      tags: [groups]
+      summary: List the task breakdown for a group on a group assignment (teacher or group members)
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+        - $ref: "#/components/parameters/GroupId"
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupTask"
+    post:
+      operationId: createGroupTask
+      tags: [groups]
+      summary: Create a task for a group member (group leader only)
+      parameters:
+        - $ref: "#/components/parameters/AssignmentId"
+        - $ref: "#/components/parameters/GroupId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupTaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupTask"
+
+  /group-tasks/{taskId}:
+    patch:
+      operationId: updateGroupTask
+      tags: [groups]
+      summary: Update a task (leader edits anything; the assignee may toggle done)
+      parameters:
+        - $ref: "#/components/parameters/GroupTaskId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupTaskUpdate"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupTask"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      operationId: deleteGroupTask
+      tags: [groups]
+      summary: Delete a task (group leader only)
+      parameters:
+        - $ref: "#/components/parameters/GroupTaskId"
+      responses:
+        "204":
+          description: Deleted
+
+components:
+  parameters:
+    CourseId:
+      name: courseId
+      in: path
+      required: true
+      schema:
+        type: integer
+    AssignmentId:
+      name: assignmentId
+      in: path
+      required: true
+      schema:
+        type: integer
+    SubmissionId:
+      name: submissionId
+      in: path
+      required: true
+      schema:
+        type: integer
+    MaterialId:
+      name: materialId
+      in: path
+      required: true
+      schema:
+        type: integer
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: integer
+    CohortId:
+      name: cohortId
+      in: path
+      required: true
+      schema:
+        type: integer
+    QuizId:
+      name: quizId
+      in: path
+      required: true
+      schema:
+        type: integer
+    AttemptId:
+      name: attemptId
+      in: path
+      required: true
+      schema:
+        type: integer
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema:
+        type: integer
+    GroupTaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: integer
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    OkResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    User:
+      type: object
+      required: [id, email, role, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [student, teacher, dean, course_coordinator, unassigned]
+        bio:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+        isAdmin:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        activeCourseCount:
+          type: integer
+
+    TeacherInvite:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        createdByEmail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTeacherInviteInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 3
+
+    RemoveTeacherResult:
+      type: object
+      required: [user, deactivatedCourses]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        deactivatedCourses:
+          type: integer
+
+    ActivityLog:
+      type: object
+      required: [id, level, action, message, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["string", "null"]
+        userEmail:
+          type: ["string", "null"]
+        userName:
+          type: ["string", "null"]
+        level:
+          type: string
+          enum: [info, warn, error]
+        action:
+          type: string
+        message:
+          type: string
+        metadata:
+          type: ["object", "null"]
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ActivityLogPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+
+    OversightCourse:
+      type: object
+      required: [id, title, teacherId, studentCount, assignmentCount]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        teacherId:
+          type: string
+        teacherName:
+          type: ["string", "null"]
+        studentCount:
+          type: integer
+        assignmentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    OversightProfessor:
+      type: object
+      required: [id, email, role, courseCount]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [teacher, course_coordinator]
+        name:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        courseCount:
+          type: integer
+
+    OversightIntegrityItem:
+      type: object
+      required: [courseId, courseTitle, flaggedCount, topScore]
+      properties:
+        courseId:
+          type: integer
+        courseTitle:
+          type: string
+        teacherName:
+          type: ["string", "null"]
+        flaggedCount:
+          type: integer
+        topScore:
+          type: number
+
+    FeedbackNote:
+      type: object
+      required: [id, senderId, recipientId, body, createdAt]
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: string
+        senderName:
+          type: ["string", "null"]
+        recipientId:
+          type: string
+        recipientName:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        body:
+          type: string
+        readAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    FeedbackCreate:
+      type: object
+      required: [recipientId, body]
+      properties:
+        recipientId:
+          type: string
+        subject:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
+    FeedbackList:
+      type: object
+      required: [received, sent]
+      properties:
+        received:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedbackNote"
+        sent:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedbackNote"
+
+    CoordinatorAssignment:
+      type: object
+      required: [coordinatorId, courseId]
+      properties:
+        coordinatorId:
+          type: string
+        courseId:
+          type: integer
+
+    AssignableCourse:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        teacherName:
+          type: ["string", "null"]
+
+    CoordinatorAssignmentsOverview:
+      type: object
+      required: [assignments, courses]
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoordinatorAssignment"
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssignableCourse"
+
+    SetCoordinatorCoursesInput:
+      type: object
+      required: [courseIds]
+      properties:
+        courseIds:
+          type: array
+          items:
+            type: integer
+
+    SetCoordinatorCoursesResult:
+      type: object
+      required: [courseIds]
+      properties:
+        courseIds:
+          type: array
+          items:
+            type: integer
+
+    AdminUserUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [student, teacher, dean, course_coordinator, unassigned]
+        isAdmin:
+          type: boolean
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher]
+        bio:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+
+    TeacherProfile:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        title:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+
+    Course:
+      type: object
+      required: [id, title, teacherId, inviteCode, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        teacherId:
+          type: string
+        teacherName:
+          type: ["string", "null"]
+        inviteCode:
+          type: string
+        isActive:
+          type: boolean
+        studentCount:
+          type: integer
+        assignmentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+
+    JoinCourseInput:
+      type: object
+      required: [inviteCode]
+      properties:
+        inviteCode:
+          type: string
+          minLength: 1
+
+    Cohort:
+      type: object
+      required: [id, teacherId, name, type, memberCount, createdAt]
+      properties:
+        id:
+          type: integer
+        teacherId:
+          type: string
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [year, course, subject, elective, custom]
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CohortInput:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [year, course, subject, elective, custom]
+
+    CohortUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [year, course, subject, elective, custom]
+
+    AddCohortMemberInput:
+      type: object
+      description: Provide exactly one of studentId or email.
+      properties:
+        studentId:
+          type: string
+        email:
+          type: string
+          pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+
+    InviteCohortInput:
+      type: object
+      required: [cohortId]
+      properties:
+        cohortId:
+          type: integer
+
+    InviteCohortResult:
+      type: object
+      required: [added, skipped]
+      properties:
+        added:
+          type: integer
+        skipped:
+          type: integer
+
+    GroupMemberInfo:
+      type: object
+      required: [id, isLeader]
+      properties:
+        id:
+          type: string
+        name:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        isLeader:
+          type: boolean
+
+    CourseGroup:
+      type: object
+      required: [id, courseId, name, members, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        name:
+          type: string
+        leaderId:
+          type: ["string", "null"]
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/GroupMemberInfo"
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseGroupInput:
+      type: object
+      required: [name, memberIds]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        leaderId:
+          type: ["string", "null"]
+          description: Optional. Must be one of memberIds.
+
+    CourseGroupUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        leaderId:
+          type: ["string", "null"]
+          description: Must be a member. Pass null to clear the leader.
+
+    GroupTask:
+      type: object
+      required: [id, assignmentId, groupId, assigneeId, description, done, createdAt]
+      properties:
+        id:
+          type: integer
+        assignmentId:
+          type: integer
+        groupId:
+          type: integer
+        assigneeId:
+          type: string
+        assigneeName:
+          type: ["string", "null"]
+        description:
+          type: string
+        done:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    GroupTaskInput:
+      type: object
+      required: [description, assigneeId]
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        assigneeId:
+          type: string
+
+    GroupTaskUpdate:
+      type: object
+      properties:
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        assigneeId:
+          type: string
+        done:
+          type: boolean
+
+    InviteInput:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 1
+          description: Any valid email address (any provider, e.g. Gmail)
+          pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+
+    Invite:
+      type: object
+      required: [id, courseId, email, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PlanItem:
+      type: object
+      required: [hourNumber, title, locked]
+      properties:
+        hourNumber:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        preWork:
+          type: ["string", "null"]
+        caseStudy:
+          type: ["string", "null"]
+        postWork:
+          type: ["string", "null"]
+        locked:
+          type: boolean
+
+    CoursePlan:
+      type: object
+      required: [totalHours, hoursPerDay, lockedDays, items]
+      properties:
+        totalHours:
+          type: integer
+        hoursPerDay:
+          type: integer
+        lockedDays:
+          type: array
+          items:
+            type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+
+    PlanItemInput:
+      type: object
+      required: [hourNumber, title]
+      properties:
+        hourNumber:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        preWork:
+          type: string
+        caseStudy:
+          type: string
+        postWork:
+          type: string
+
+    CoursePlanInput:
+      type: object
+      required: [totalHours, items]
+      properties:
+        totalHours:
+          type: integer
+          minimum: 0
+          maximum: 200
+          multipleOf: 5
+        lockedDays:
+          type: array
+          items:
+            type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItemInput"
+
+    Assignment:
+      type: object
+      required: [id, courseId, title, allowedTypes, maxScore, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        allowedTypes:
+          type: array
+          items:
+            type: string
+            enum: [text, file, link, video, audio]
+        maxScore:
+          type: integer
+        assignmentType:
+          type: string
+          enum: [individual, group]
+        leaderOnlySubmit:
+          type: boolean
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        createdAt:
+          type: string
+          format: date-time
+        targetGroupIds:
+          type: ["array", "null"]
+          description: Teacher-only. Group ids a group assignment targets.
+          items:
+            type: integer
+        targetGroups:
+          type: ["array", "null"]
+          description: Teacher-only. Details for targeted groups.
+          items:
+            $ref: "#/components/schemas/CourseGroup"
+        myGroup:
+          description: Student-only on group assignments. The viewer's targeted group.
+          oneOf:
+            - $ref: "#/components/schemas/CourseGroup"
+            - type: "null"
+        submissionCount:
+          type: integer
+        mySubmissionId:
+          type: ["integer", "null"]
+        mySubmissionStatus:
+          type: ["string", "null"]
+          enum: [submitted, graded, null]
+        targetStudentIds:
+          type: ["array", "null"]
+          description: Teacher-only. Student ids the assignment is targeted at; null/empty means all students.
+          items:
+            type: string
+        targetStudents:
+          type: ["array", "null"]
+          description: Teacher-only. Details for targeted students.
+          items:
+            type: object
+            required: [id]
+            properties:
+              id:
+                type: string
+              name:
+                type: ["string", "null"]
+              email:
+                type: ["string", "null"]
+
+    AssignmentInput:
+      type: object
+      required: [title, allowedTypes]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        allowedTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [text, file, link, video, audio]
+        maxScore:
+          type: integer
+          minimum: 1
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        targetStudentIds:
+          type: array
+          description: Optional. Enrolled student ids to target; omit or empty for all students.
+          items:
+            type: string
+        assignmentType:
+          type: string
+          enum: [individual, group]
+          description: Defaults to individual.
+        targetGroupIds:
+          type: array
+          description: Required (non-empty) when assignmentType is group.
+          items:
+            type: integer
+        leaderOnlySubmit:
+          type: boolean
+          description: Group assignments only. When true only the group leader may submit.
+
+    AssignmentUpdate:
+      type: object
+      description: Partial update. Omitted fields are left unchanged. targetStudentIds, when present, replaces the audience (empty array = all students).
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        allowedTypes:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [text, file, link, video, audio]
+        maxScore:
+          type: integer
+          minimum: 1
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        targetStudentIds:
+          type: array
+          description: Replaces the targeted audience. Empty array = all students.
+          items:
+            type: string
+
+    MaterialFile:
+      type: object
+      required: [path, name]
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+        size:
+          type: integer
+
+    CourseMaterial:
+      type: object
+      required: [id, courseId, authorId, title, links, attachments, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        authorId:
+          type: string
+        title:
+          type: string
+        body:
+          type: ["string", "null"]
+        links:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaterialFile"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UnseenMaterialsCount:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+
+    CourseMaterialInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        body:
+          type: string
+        links:
+          type: array
+          items:
+            type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaterialFile"
+
+    SubmissionFile:
+      type: object
+      required: [path, name]
+      properties:
+        path:
+          type: string
+        name:
+          type: string
+
+    Submission:
+      type: object
+      required: [id, assignmentId, studentId, status, submittedAt]
+      properties:
+        id:
+          type: integer
+        assignmentId:
+          type: integer
+        studentId:
+          type: string
+        studentName:
+          type: ["string", "null"]
+        assignmentTitle:
+          type: ["string", "null"]
+        courseId:
+          type: ["integer", "null"]
+        maxScore:
+          type: ["integer", "null"]
+        groupId:
+          type: ["integer", "null"]
+        groupName:
+          type: ["string", "null"]
+        group:
+          description: Group roster for group submissions (teacher and group members).
+          oneOf:
+            - $ref: "#/components/schemas/CourseGroup"
+            - type: "null"
+        groupTasks:
+          type: ["array", "null"]
+          description: Task breakdown for group submissions.
+          items:
+            $ref: "#/components/schemas/GroupTask"
+        textResponse:
+          type: ["string", "null"]
+        linkUrl:
+          type: ["string", "null"]
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        videoPath:
+          type: ["string", "null"]
+        audioPath:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [submitted, graded]
+        aiScore:
+          type: ["number", "null"]
+        aiFeedback:
+          type: ["string", "null"]
+        plagiarismScore:
+          type: ["number", "null"]
+        aiDeclaration:
+          description: Student's AI-use self-declaration (null = not declared)
+          type: ["string", "null"]
+          enum: [none, assisted, generated, null]
+        aiDeclarationNote:
+          type: ["string", "null"]
+        similarityMax:
+          description: Highest similarity (0-100) to another student's submission. Teacher-only; null otherwise.
+          type: ["number", "null"]
+        similarityMatches:
+          description: Flagged similar submissions. Teacher-only; null otherwise.
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/SimilarityMatch"
+        score:
+          type: ["number", "null"]
+        feedback:
+          type: ["string", "null"]
+        submittedAt:
+          type: string
+          format: date-time
+        gradedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    SimilarityMatch:
+      type: object
+      required: [submissionId, studentId, score]
+      properties:
+        submissionId:
+          type: integer
+        studentId:
+          type: string
+        studentName:
+          type: ["string", "null"]
+        score:
+          type: number
+        excerpt:
+          description: Excerpt of the matched submission's text for comparison
+          type: ["string", "null"]
+
+    SimilarityPairSide:
+      type: object
+      required: [submissionId, studentId]
+      properties:
+        submissionId:
+          type: integer
+        studentId:
+          type: string
+        studentName:
+          type: ["string", "null"]
+
+    HighlightRange:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          description: Inclusive character offset where a matched passage begins
+          type: integer
+        end:
+          description: Exclusive character offset where the matched passage ends
+          type: integer
+
+    ComparisonSide:
+      type: object
+      required: [submissionId, studentId, text, ranges]
+      properties:
+        submissionId:
+          type: integer
+        studentId:
+          type: string
+        studentName:
+          type: ["string", "null"]
+        text:
+          type: string
+        ranges:
+          type: array
+          items:
+            $ref: "#/components/schemas/HighlightRange"
+
+    SimilarityComparison:
+      type: object
+      required: [score, left, right]
+      properties:
+        score:
+          description: Similarity score (0-100) between the two submissions
+          type: number
+        left:
+          $ref: "#/components/schemas/ComparisonSide"
+        right:
+          $ref: "#/components/schemas/ComparisonSide"
+
+    CourseSimilarityPair:
+      type: object
+      required:
+        [id, assignmentId, assignmentTitle, score, computedAt, submissionA, submissionB]
+      properties:
+        id:
+          type: integer
+        assignmentId:
+          type: integer
+        assignmentTitle:
+          type: string
+        score:
+          type: number
+        computedAt:
+          type: string
+          format: date-time
+        submissionA:
+          $ref: "#/components/schemas/SimilarityPairSide"
+        submissionB:
+          $ref: "#/components/schemas/SimilarityPairSide"
+        dismissedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    SimilarityDismissalInput:
+      type: object
+      required: [dismissed]
+      properties:
+        dismissed:
+          type: boolean
+
+    SimilarityRunResult:
+      type: object
+      required: [flaggedPairs]
+      properties:
+        flaggedPairs:
+          type: integer
+
+    SubmissionInput:
+      type: object
+      required: [aiDeclaration]
+      properties:
+        textResponse:
+          type: string
+        linkUrl:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        videoPath:
+          type: string
+        audioPath:
+          type: string
+        aiDeclaration:
+          type: string
+          enum: [none, assisted, generated]
+        aiDeclarationNote:
+          type: string
+
+    GradeInput:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: number
+        feedback:
+          type: string
+
+    QuizQuestion:
+      type: object
+      required: [id, quizId, position, type, prompt, options, points]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        position:
+          type: integer
+        type:
+          type: string
+          enum: [multiple_choice, short_answer]
+        prompt:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctOption:
+          type: ["integer", "null"]
+        points:
+          type: integer
+
+    Quiz:
+      type: object
+      required: [id, courseId, title, status, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+          enum: [draft, published]
+        resultsPublishedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        maxScore:
+          type: integer
+        questionCount:
+          type: integer
+        attemptCount:
+          type: integer
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+        myAttempt:
+          oneOf:
+            - $ref: "#/components/schemas/QuizAttempt"
+            - type: "null"
+
+    QuizQuestionInput:
+      type: object
+      required: [type, prompt, points]
+      properties:
+        type:
+          type: string
+          enum: [multiple_choice, short_answer]
+        prompt:
+          type: string
+          minLength: 1
+        options:
+          type: array
+          items:
+            type: string
+        correctOption:
+          type: integer
+          minimum: 0
+        points:
+          type: integer
+          minimum: 1
+
+    QuizInput:
+      type: object
+      required: [title, questions]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/QuizQuestionInput"
+
+    QuizAnswer:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+        selectedOption:
+          type: ["integer", "null"]
+        textAnswer:
+          type: ["string", "null"]
+        autoScore:
+          type: ["number", "null"]
+        aiScore:
+          type: ["number", "null"]
+        aiFeedback:
+          type: ["string", "null"]
+        score:
+          type: ["number", "null"]
+
+    QuizAttempt:
+      type: object
+      required: [id, quizId, studentId, status, maxScore, submittedAt]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        studentId:
+          type: string
+        studentName:
+          type: ["string", "null"]
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizAnswer"
+        score:
+          type: ["number", "null"]
+        maxScore:
+          type: integer
+        status:
+          type: string
+          enum: [submitted, graded]
+        submittedAt:
+          type: string
+          format: date-time
+        gradedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    QuizAnswerInput:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+        selectedOption:
+          type: integer
+          minimum: 0
+        textAnswer:
+          type: string
+
+    QuizAttemptInput:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizAnswerInput"
+
+    QuizGradeInput:
+      type: object
+      required: [scores]
+      properties:
+        scores:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [questionId, score]
+            properties:
+              questionId:
+                type: integer
+              score:
+                type: number
+                minimum: 0
+
+    Message:
+      type: object
+      required: [id, courseId, senderId, body, isAnnouncement, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        senderId:
+          type: string
+        senderName:
+          type: ["string", "null"]
+        senderAvatarUrl:
+          type: ["string", "null"]
+        recipientId:
+          type: ["string", "null"]
+        body:
+          type: string
+        isAnnouncement:
+          type: boolean
+        readAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MessageInput:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1
+        recipientId:
+          type: string
+        isAnnouncement:
+          type: boolean
+
+    MarkReadInput:
+      type: object
+      required: [courseId]
+      properties:
+        courseId:
+          type: integer
+        withUserId:
+          type: string
+
+    InboxThread:
+      type: object
+      required: [courseId, courseTitle, otherUserId, unreadCount]
+      properties:
+        courseId:
+          type: integer
+        courseTitle:
+          type: string
+        otherUserId:
+          type: string
+        otherUserName:
+          type: ["string", "null"]
+        otherUserAvatarUrl:
+          type: ["string", "null"]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+          format: date-time
+        unreadCount:
+          type: integer
+
+    SubmissionSummary:
+      type: object
+      required: [id, assignmentId, assignmentTitle, status, hasFeedback, submittedAt]
+      properties:
+        id:
+          type: integer
+        assignmentId:
+          type: integer
+        assignmentTitle:
+          type: string
+        status:
+          type: string
+          enum: [submitted, graded]
+        score:
+          type: ["number", "null"]
+        maxScore:
+          type: ["integer", "null"]
+        hasFeedback:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+        gradedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    CourseStudentStats:
+      type: object
+      required: [totalAssignments, completedCount, gradedCount, submissions]
+      properties:
+        overallScore:
+          type: ["number", "null"]
+          description: Average percentage (0-100) across graded submissions, null if nothing graded
+        totalAssignments:
+          type: integer
+        completedCount:
+          type: integer
+          description: Number of assignments the student has submitted
+        gradedCount:
+          type: integer
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionSummary"
+        totalQuizzes:
+          type: integer
+        quizzes:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizResultSummary"
+
+    QuizResultSummary:
+      type: object
+      required: [quizId, quizTitle, status, maxScore, submittedAt, resultsPublished]
+      properties:
+        quizId:
+          type: integer
+        quizTitle:
+          type: string
+        status:
+          type: string
+          enum: [submitted, graded]
+        score:
+          type: ["number", "null"]
+        maxScore:
+          type: integer
+        resultsPublished:
+          type: boolean
+        submittedAt:
+          type: string
+          format: date-time
+
+    LeaderboardEntry:
+      type: object
+      required: [studentId, rank, gradedCount, completedCount, isMe]
+      properties:
+        studentId:
+          type: string
+        name:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        rank:
+          type: integer
+        overallScore:
+          type: ["number", "null"]
+        gradedCount:
+          type: integer
+        completedCount:
+          type: integer
+        isMe:
+          type: boolean
+
+    Leaderboard:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        myRank:
+          type: ["integer", "null"]
+
+    Dashboard:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+        courseCount:
+          type: integer
+        studentCount:
+          type: integer
+        pendingGradingCount:
+          type: integer
+        totalUnread:
+          type: integer
+        upcomingAssignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Assignment"
+        recentSubmissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Submission"
+        integrityFlags:
+          type: array
+          description: Teacher-only per-course roll-up of flagged similarity pairs.
+          items:
+            $ref: "#/components/schemas/DashboardIntegritySummary"
+
+    DashboardIntegritySummary:
+      type: object
+      required: [courseId, courseTitle, flaggedCount, topScore]
+      properties:
+        courseId:
+          type: integer
+        courseTitle:
+          type: string
+        flaggedCount:
+          type: integer
+        topScore:
+          type: number
+
+    ClassSession:
+      type: object
+      required: [id, courseId, title, startsAt, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        courseTitle:
+          type: ["string", "null"]
+        title:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+        location:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    ClassSessionInput:
+      type: object
+      required: [title, startsAt]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: ["string", "null"]
+          format: date-time
+        location:
+          type: ["string", "null"]
+
+    CalendarAssignment:
+      type: object
+      required: [id, courseId, courseTitle, title, dueDate]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        courseTitle:
+          type: string
+        title:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        mySubmissionStatus:
+          type: ["string", "null"]
+
+    CalendarData:
+      type: object
+      required: [sessions, assignments]
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassSession"
+        assignments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarAssignment"
+
+    Notification:
+      type: object
+      required: [id, type, title, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: ["string", "null"]
+        link:
+          type: ["string", "null"]
+        courseId:
+          type: ["integer", "null"]
+        readAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    NotificationsPage:
+      type: object
+      required: [unreadCount, notifications]
+      properties:
+        unreadCount:
+          type: integer
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+
+    MarkNotificationsReadInput:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+        all:
+          type: boolean
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/UploadUrlRequest'

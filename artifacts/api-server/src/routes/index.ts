@@ -1,0 +1,42 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import storageRouter from "./storage";
+import meRouter from "./me";
+import coursesRouter from "./courses";
+import assignmentsRouter from "./assignments";
+import submissionsRouter from "./submissions";
+import quizzesRouter from "./quizzes";
+import materialsRouter from "./materials";
+import messagingRouter from "./messaging";
+import dashboardRouter from "./dashboard";
+import gradesRouter from "./grades";
+import sessionsRouter from "./sessions";
+import notificationsRouter from "./notifications";
+import adminRouter from "./admin";
+import cohortsRouter from "./cohorts";
+import oversightRouter from "./oversight";
+import feedbackRouter from "./feedback";
+import groupsRouter from "./groups";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(storageRouter);
+router.use(meRouter);
+router.use(coursesRouter);
+router.use(assignmentsRouter);
+router.use(submissionsRouter);
+router.use(quizzesRouter);
+router.use(materialsRouter);
+router.use(messagingRouter);
+router.use(dashboardRouter);
+router.use(gradesRouter);
+router.use(sessionsRouter);
+router.use(notificationsRouter);
+router.use(adminRouter);
+router.use(cohortsRouter);
+router.use(oversightRouter);
+router.use(feedbackRouter);
+router.use(groupsRouter);
+
+export default router;

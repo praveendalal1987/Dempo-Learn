@@ -1,0 +1,6 @@
+- [Clerk web wiring quirks](clerk-web-wiring.md) — dev proxyUrl must stay empty; publishableKeyFromHost from @clerk/react/internal; proxy path /api/__clerk.
+- [Monorepo typecheck order](monorepo-typecheck.md) — run `typecheck:libs` (tsc --build) before per-package typechecks or api-server reports phantom missing exports.
+- [API server testing pattern](api-server-testing.md) — vitest+supertest, mock only @clerk/express, real dev DB; push schema first if relations missing.
+- [OpenAPI codegen gotchas](openapi-codegen.md) — no `format: uri`, no same-name query+path params, React 19 (not 18) is the project version.
+- [Parallel task overlap on rebase](parallel-task-overlap.md) — if a sibling task merged overlapping functionality into main, adopt main's version wholesale and re-layer only your unique delta.
+- [Role revocation authz](role-revocation-authz.md) — ownership checks must verify current role via authz helpers; id-only checks leak privileges after demotion.
