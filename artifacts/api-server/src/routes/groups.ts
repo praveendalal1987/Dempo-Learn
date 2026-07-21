@@ -10,7 +10,6 @@ import {
   enrollmentsTable,
   usersTable,
   assignmentsTable,
-  submissionsTable,
   type CourseGroup,
   type User,
 } from "@workspace/db";
