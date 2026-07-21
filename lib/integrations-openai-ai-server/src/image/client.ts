@@ -2,28 +2,33 @@ import fs from "node:fs";
 import OpenAI, { toFile } from "openai";
 import { Buffer } from "node:buffer";
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_BASE_URL must be set. Did you forget to provision the OpenAI AI integration?",
-  );
-}
+// Lazy, memoized client (see ../client.ts) so importing this module never
+// requires AI env at boot — only when an image function is actually called.
+let client: OpenAI | null = null;
 
-if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-  throw new Error(
-    "AI_INTEGRATIONS_OPENAI_API_KEY must be set. Did you forget to provision the OpenAI AI integration?",
-  );
+function getOpenAI(): OpenAI {
+  if (client) return client;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  if (!baseURL) {
+    throw new Error(
+      "AI_INTEGRATIONS_OPENAI_BASE_URL must be set to use the AI integration.",
+    );
+  }
+  if (!apiKey) {
+    throw new Error(
+      "AI_INTEGRATIONS_OPENAI_API_KEY must be set to use the AI integration.",
+    );
+  }
+  client = new OpenAI({ apiKey, baseURL });
+  return client;
 }
-
-export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 export async function generateImageBuffer(
   prompt: string,
   size: "1024x1024" | "512x512" | "256x256" = "1024x1024"
 ): Promise<Buffer> {
-  const response = await openai.images.generate({
+  const response = await getOpenAI().images.generate({
     model: "gpt-image-1",
     prompt,
     size,
@@ -45,7 +50,7 @@ export async function editImages(
     )
   );
 
-  const response = await openai.images.edit({
+  const response = await getOpenAI().images.edit({
     model: "gpt-image-1",
     image: images,
     prompt,

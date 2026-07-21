@@ -175,7 +175,12 @@ export class StoredObject implements AclCapableObject {
 }
 
 export class ObjectStorageService {
-  private readonly client = getClient();
+  // Lazy: resolve the S3 client (and its required env) only when a storage
+  // operation actually runs, so the server can boot without storage configured
+  // (e.g. health checks, routes that never touch storage). getClient() memoizes.
+  private get client(): S3Client {
+    return getClient();
+  }
 
   /** Private-object key prefix within the bucket (e.g. "private"). */
   private getPrivatePrefix(): string {

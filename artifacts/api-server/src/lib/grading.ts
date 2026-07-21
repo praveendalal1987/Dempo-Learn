@@ -1,10 +1,24 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { getOpenAI, isAIConfigured } from "@workspace/integrations-openai-ai-server";
 import { logger } from "./logger";
 
 export type AiGradeResult = {
   aiScore: number | null;
   aiFeedback: string | null;
 };
+
+/**
+ * AI grading is opt-in. It runs only when AI_GRADING_ENABLED=true AND the AI
+ * endpoint/key are configured. This keeps grading fully optional (e.g. off
+ * until data-residency/compliance sign-off) without blocking submissions.
+ */
+function aiGradingEnabled(): boolean {
+  return process.env.AI_GRADING_ENABLED === "true" && isAIConfigured();
+}
+
+/** The grading model — configurable so we can point at Sarvam (or any OpenAI-compatible model). */
+function gradingModel(): string {
+  return process.env.AI_GRADING_MODEL || "sarvam-105b";
+}
 
 /**
  * Grade a text submission with the AI model. Returns a suggested score out of
@@ -18,6 +32,10 @@ export async function gradeTextSubmission(
   textResponse: string,
 ): Promise<AiGradeResult> {
   if (typeof textResponse !== "string" || textResponse.trim().length === 0) {
+    return { aiScore: null, aiFeedback: null };
+  }
+
+  if (!aiGradingEnabled()) {
     return { aiScore: null, aiFeedback: null };
   }
 
@@ -36,8 +54,8 @@ Grade this submission. Respond ONLY with a JSON object of the exact shape:
 {"score": <number between 0 and ${maxScore}>, "feedback": "<2-4 sentences of constructive feedback for the student>"}`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
+    const completion = await getOpenAI().chat.completions.create({
+      model: gradingModel(),
       max_completion_tokens: 8192,
       messages: [
         {
@@ -87,6 +105,10 @@ export async function gradeShortAnswer(
     return { aiScore: 0, aiFeedback: "No answer provided." };
   }
 
+  if (!aiGradingEnabled()) {
+    return { aiScore: null, aiFeedback: null };
+  }
+
   const prompt = `You are grading one short-answer quiz question.
 
 Question: ${questionPrompt}
@@ -101,8 +123,8 @@ Respond ONLY with a JSON object of the exact shape:
 {"score": <number between 0 and ${points}>, "feedback": "<1-2 sentences explaining the score>"}`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
+    const completion = await getOpenAI().chat.completions.create({
+      model: gradingModel(),
       max_completion_tokens: 2048,
       messages: [
         {
