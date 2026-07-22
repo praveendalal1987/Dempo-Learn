@@ -26,9 +26,8 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://aipraveen.com"),
   title: {
-    default:
-      "Praveen Dalal · AIPRAVEEN.COM — Learn AI. Build real things. Get seen.",
-    template: "%s · AIPRAVEEN.COM",
+    default: "AIPD — Learn AI. Build real things. Get seen.",
+    template: "%s · AIPD",
   },
   description:
     "Self-paced AI courses, 100 industry practice projects, national build competitions, and a reviewed portfolio recruiters can open. One year of access with every purchase.",

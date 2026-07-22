@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { routes } from "@/lib/routes";
+import { Logo } from "@/components/logo";
 
 const COL_LINK: React.CSSProperties = {
   fontSize: 13,
@@ -37,9 +38,7 @@ export function SiteFooter() {
         }}
       >
         <div>
-          <div className="display" style={{ fontWeight: 700, fontSize: 16 }}>
-            Praveen Dalal
-          </div>
+          <Logo variant="onLight" tagline={false} />
           <p
             style={{
               color: "var(--text-secondary)",

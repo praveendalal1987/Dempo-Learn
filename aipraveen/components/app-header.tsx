@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { routes } from "@/lib/routes";
+import { Logo } from "@/components/logo";
 
 const NAV = [
   { label: "Dashboard", href: routes.dashboard },
@@ -23,13 +24,8 @@ export function AppHeader({ email }: { email: string }) {
           gap: 24,
         }}
       >
-        <Link href={routes.home} className="plain" style={{ color: "#fff", display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span className="display" style={{ fontWeight: 700, fontSize: 15 }}>
-            Praveen Dalal
-          </span>
-          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "var(--accent-on-navy)" }}>
-            AIPRAVEEN.COM
-          </span>
+        <Link href={routes.home} className="plain" style={{ display: "flex" }}>
+          <Logo variant="onDark" size="sm" tagline={false} />
         </Link>
         <nav style={{ display: "flex", gap: 18, marginLeft: 8 }}>
           {NAV.map((n) => (

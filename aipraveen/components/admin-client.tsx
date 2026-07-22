@@ -18,6 +18,7 @@ import {
   type AccessChip,
 } from "@/lib/admin";
 import { routes } from "@/lib/routes";
+import { Logo } from "@/components/logo";
 
 export function AdminClient() {
   const [tab, setTab] = useState<AdminTab>("Dashboard");
@@ -26,10 +27,8 @@ export function AdminClient() {
     <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", minHeight: "100vh" }}>
       {/* Sidebar */}
       <aside style={{ background: "var(--ink)", color: "#fff", padding: "24px 0" }}>
-        <div style={{ padding: "0 24px 24px" }}>
-          <div className="display" style={{ fontWeight: 700, fontSize: 15 }}>
-            Praveen Dalal
-          </div>
+        <div style={{ padding: "0 24px 24px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <Logo variant="onDark" size="sm" tagline={false} />
           <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "var(--accent-on-navy)" }}>
             ADMIN
           </div>

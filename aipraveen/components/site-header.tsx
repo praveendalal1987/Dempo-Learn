@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PRIMARY_NAV, routes } from "@/lib/routes";
+import { Logo } from "@/components/logo";
 
 export function SiteHeader() {
   const pathname = usePathname();
@@ -30,27 +31,8 @@ export function SiteHeader() {
           gap: 28,
         }}
       >
-        <Link
-          href={routes.home}
-          className="plain"
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 8,
-          }}
-        >
-          <span
-            className="display"
-            style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" }}
-          >
-            Praveen Dalal
-          </span>
-          <span
-            className="mono"
-            style={{ fontSize: 10, letterSpacing: "0.14em", color: "var(--accent)" }}
-          >
-            AIPRAVEEN.COM
-          </span>
+        <Link href={routes.home} className="plain" style={{ display: "flex" }}>
+          <Logo variant="onLight" />
         </Link>
         <nav
           style={{
