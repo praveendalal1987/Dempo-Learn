@@ -34,6 +34,9 @@ services:
       - key: WEB_DIST_DIR
         value: ./artifacts/dempo/dist/public
       # Secrets — set these in the Render dashboard (not committed).
+      # Your teaching email — signing up with it makes you teacher + admin.
+      - key: ADMIN_EMAILS
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: CLERK_PUBLISHABLE_KEY

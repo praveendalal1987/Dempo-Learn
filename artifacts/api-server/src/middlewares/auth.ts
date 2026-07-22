@@ -4,8 +4,15 @@ import { eq } from "drizzle-orm";
 import { db, usersTable, teacherInvitesTable, type User } from "@workspace/db";
 import { logActivity } from "../lib/activityLog";
 
-// Emails that are automatically provisioned as teacher + admin.
-const ADMIN_EMAILS = new Set(["pravendalal@gmail.com"]);
+// Emails that are automatically provisioned as teacher + admin. Configured via
+// the ADMIN_EMAILS env var (comma-separated). Empty by default — no hardcoded
+// admin backdoor in the source.
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+);
 
 function isAdminEmail(email: string | null | undefined): boolean {
   return !!email && ADMIN_EMAILS.has(email.trim().toLowerCase());

@@ -77,7 +77,7 @@ export function RolePickerPage() {
     return null; // will redirect in effect
   }
 
-  const handleSelectRole = (role: "student" | "teacher") => {
+  const handleSelectRole = (role: "student") => {
     updateMe.mutate({ data: { role } }, {
       onSuccess: () => {
         setLocation("/dashboard");
@@ -87,51 +87,36 @@ export function RolePickerPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-xl flex flex-col items-center text-center px-4">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center text-center px-4">
         <img src={import.meta.env.BASE_URL + "logo.png"} alt="Dempo Learn" className="w-16 h-16 mb-6" />
         <h1 className="text-4xl font-serif font-bold text-foreground mb-3">
-          How will you use Dempo Learn?
+          Welcome to Dempo Learn
         </h1>
         <p className="text-lg text-muted-foreground max-w-md mb-12">
-          Choose your role to get started. You can't change this later without administrator help.
+          Let's set you up as a student — join courses, submit assignments, and track your grades and feedback.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        <div className="w-full">
           <Card className="hover:border-primary cursor-pointer transition-all hover:shadow-md relative overflow-hidden group" onClick={() => handleSelectRole("student")}>
             <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardHeader className="text-center pb-2">
               <div className="mx-auto w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6" />
               </div>
-              <CardTitle className="font-serif text-2xl">I'm a Student</CardTitle>
+              <CardTitle className="font-serif text-2xl">Continue as Student</CardTitle>
               <CardDescription className="text-base mt-2">
                 Join courses, submit assignments, and view grades and feedback.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-4 flex justify-center">
-              <Button disabled={updateMe.isPending} variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground">
-                Join as Student
+              <Button disabled={updateMe.isPending} className="w-full">
+                {updateMe.isPending ? "Setting up…" : "Get started"}
               </Button>
             </CardContent>
           </Card>
-
-          <Card className="hover:border-primary cursor-pointer transition-all hover:shadow-md relative overflow-hidden group" onClick={() => handleSelectRole("teacher")}>
-            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <CardHeader className="text-center pb-2">
-              <div className="mx-auto w-12 h-12 bg-accent/10 text-accent rounded-full flex items-center justify-center mb-4">
-                <GraduationCap className="w-6 h-6" />
-              </div>
-              <CardTitle className="font-serif text-2xl">I'm a Professor</CardTitle>
-              <CardDescription className="text-base mt-2">
-                Create courses, manage assignments, and grade student submissions.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4 flex justify-center">
-              <Button disabled={updateMe.isPending} variant="outline" className="w-full group-hover:bg-accent group-hover:text-accent-foreground border-accent text-accent">
-                Join as Professor
-              </Button>
-            </CardContent>
-          </Card>
+          <p className="text-sm text-muted-foreground mt-6">
+            Teaching on Dempo? Your administrator will set up your educator account.
+          </p>
         </div>
       </div>
     </div>
