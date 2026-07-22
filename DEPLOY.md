@@ -54,3 +54,38 @@ Single origin = relative `/api` calls and Clerk session cookies just work.
 - `https://<your-app>.onrender.com/api/healthz` should return `{"status":"ok"}`.
 - The root URL should load the Dempo landing page.
 - Sign up as the first user to exercise auth → API → database end-to-end.
+
+## Enabling file uploads (Cloudflare R2)
+
+R2 is S3-compatible, so no code changes — just configuration. Free tier: 10 GB.
+
+1. In the **Cloudflare dashboard → R2**, create a bucket, e.g. `dempo-uploads`
+   (keep it private).
+2. **R2 → Manage R2 API Tokens → Create API Token** → *Object Read & Write* →
+   scope to the bucket. Copy the **Access Key ID**, **Secret Access Key**, and
+   note your account's **S3 endpoint** `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
+3. On the bucket, set a **CORS policy** (bucket → Settings → CORS) so the browser
+   can upload directly:
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://<your-app>.onrender.com", "http://localhost:5173"],
+       "AllowedMethods": ["GET", "PUT"],
+       "AllowedHeaders": ["*"],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
+4. In **Render → the `dempo` service → Environment**, set the four secret vars
+   (the non-secret ones — `STORAGE_REGION=auto`, `STORAGE_FORCE_PATH_STYLE=false`,
+   `PRIVATE_OBJECT_DIR=private`, `PUBLIC_OBJECT_SEARCH_PATHS=public` — come from
+   `render.yaml`):
+   - `STORAGE_ENDPOINT` = `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+   - `STORAGE_BUCKET` = `dempo-uploads`
+   - `STORAGE_ACCESS_KEY` = the R2 Access Key ID
+   - `STORAGE_SECRET_KEY` = the R2 Secret Access Key
+5. Save → Render redeploys. Uploads (assignment files/video/audio, material
+   attachments) now work.
+
+For local dev, put the same `STORAGE_*` values in the root `.env`.

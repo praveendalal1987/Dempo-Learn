@@ -43,3 +43,21 @@ services:
       # Build-time: baked into the web bundle. Same value as CLERK_PUBLISHABLE_KEY.
       - key: VITE_CLERK_PUBLISHABLE_KEY
         sync: false
+      # Object storage (Cloudflare R2 — S3-compatible). Non-secret defaults are
+      # inline; set endpoint/bucket/keys as secrets in the Render dashboard.
+      - key: STORAGE_REGION
+        value: auto
+      - key: STORAGE_FORCE_PATH_STYLE
+        value: "false"
+      - key: PRIVATE_OBJECT_DIR
+        value: private
+      - key: PUBLIC_OBJECT_SEARCH_PATHS
+        value: public
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_BUCKET
+        sync: false
+      - key: STORAGE_ACCESS_KEY
+        sync: false
+      - key: STORAGE_SECRET_KEY
+        sync: false
