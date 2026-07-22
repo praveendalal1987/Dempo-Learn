@@ -36,7 +36,29 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+// Restrict credentialed CORS to configured web origins (CORS_ALLOWED_ORIGINS
+// or APP_BASE_URL, comma-separated). If none are configured, allow any origin
+// only in non-production (dev convenience) but never in production.
+const corsOrigins = (
+  process.env.CORS_ALLOWED_ORIGINS ||
+  process.env.APP_BASE_URL ||
+  ""
+)
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    credentials: true,
+    origin:
+      corsOrigins.length > 0
+        ? corsOrigins
+        : process.env.NODE_ENV === "production"
+          ? false
+          : true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

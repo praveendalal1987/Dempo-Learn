@@ -25,7 +25,24 @@ router.patch("/me", requireAuth, async (req, res): Promise<void> => {
 
   const updates: Record<string, unknown> = {};
   if (parsed.data.name !== undefined) updates.name = parsed.data.name;
-  if (parsed.data.role !== undefined) updates.role = parsed.data.role;
+
+  // Role is self-selectable ONLY as the initial choice by a brand-new
+  // (unassigned) user, and ONLY to "student". Teacher is invite-only
+  // (see middlewares/auth.ts), so it can never be self-granted here. This
+  // closes a privilege-escalation hole where any user could PATCH /me with
+  // {"role":"teacher"} to promote themselves.
+  if (
+    parsed.data.role !== undefined &&
+    parsed.data.role !== req.localUser!.role
+  ) {
+    if (req.localUser!.role !== "unassigned" || parsed.data.role !== "student") {
+      res.status(403).json({
+        error: "Role cannot be changed here.",
+      });
+      return;
+    }
+    updates.role = parsed.data.role;
+  }
 
   const hasProfileFields =
     parsed.data.bio !== undefined ||
