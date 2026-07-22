@@ -1,0 +1,38 @@
+/** Central route map so nav/links stay consistent. */
+export const routes = {
+  home: "/",
+  store: "/store",
+  product: (slug: string) => `/store/${slug}`,
+  competitions: "/competitions",
+  practice: "/practice",
+  workshops: "/workshops",
+  companies: "/companies",
+  book: "/book",
+  about: "/about",
+  work: "/work",
+  testimonials: "/testimonials",
+  login: "/login",
+  checkout: "/checkout",
+  checkoutSuccess: "/checkout/success",
+  checkoutFailed: "/checkout/failed",
+  dashboard: "/dashboard",
+  learn: (slug: string) => `/learn/${slug}`,
+  viewer: (slug: string) => `/learn/${slug}/resources`,
+  portfolio: "/portfolio",
+  recruiter: (slug: string) => `/p/${slug}`,
+  renew: (slug: string) => `/renew/${slug}`,
+  expired: (slug: string) => `/expired/${slug}`,
+  admin: "/admin",
+  emails: "/admin/emails",
+} as const;
+
+/** Primary marketing nav (order matters). */
+export const PRIMARY_NAV: { label: string; href: string }[] = [
+  { label: "Store", href: routes.store },
+  { label: "Competitions", href: routes.competitions },
+  { label: "Practice", href: routes.practice },
+  { label: "Workshops", href: routes.workshops },
+  { label: "For companies", href: routes.companies },
+  { label: "Book", href: routes.book },
+  { label: "About", href: routes.about },
+];
