@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import studentsGroupImg from "@/assets/hero-students-1.jpg";
-import studentLectureImg from "@/assets/hero-students-2.jpg";
 
 /* ---------- Floating wrapper ---------- */
 
@@ -306,18 +305,6 @@ function LeaderboardCard() {
   );
 }
 
-function AiAssistantBadge() {
-  return (
-    <div className={`${cardBase} px-4 py-3 flex items-center gap-2 w-fit`}>
-      <div className="relative">
-        <Sparkles className="w-5 h-5 text-violet-500" />
-      </div>
-      <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">AI Assistant</span>
-      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse motion-reduce:animate-none" />
-    </div>
-  );
-}
-
 /* ---------- Hero ---------- */
 
 export function LandingHero() {
@@ -331,34 +318,22 @@ export function LandingHero() {
       <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-cyan-300/30 dark:bg-cyan-500/20 blur-3xl" />
       <div className="absolute -bottom-40 -right-24 w-[30rem] h-[30rem] rounded-full bg-pink-300/30 dark:bg-pink-500/20 blur-3xl" />
 
-      {/* Floating cards — desktop */}
+      {/* Floating cards — desktop (kept intentionally light) */}
       <div className="hidden lg:block absolute inset-0 pointer-events-none" aria-hidden="true">
-        <Floating className="absolute left-[4%] top-[16%]" delay={0.2} duration={7}>
+        <Floating className="absolute left-[4%] top-[18%]" delay={0.2} duration={7}>
           <AiChatCard />
         </Floating>
-        <Floating className="absolute left-[7%] bottom-[14%]" delay={0.5} duration={6} distance={10}>
-          <LeaderboardCard />
+        <Floating className="absolute left-[5%] bottom-[14%]" delay={1.1} duration={7} distance={8}>
+          <StudentPhotoCard src={studentsGroupImg} alt="Students studying together" caption="Study squads, IRL energy 📚" className="w-56" />
         </Floating>
-        <Floating className="absolute right-[5%] top-[14%]" delay={0.35} duration={6.5}>
+        <Floating className="absolute right-[5%] top-[16%]" delay={0.35} duration={6.5}>
           <ProgressCard />
         </Floating>
-        <Floating className="absolute right-[10%] top-[44%]" delay={0.65} duration={5.5} distance={9}>
+        <Floating className="absolute right-[8%] top-[46%]" delay={0.65} duration={5.5} distance={9}>
           <XpCard />
         </Floating>
-        <Floating className="absolute right-[6%] bottom-[12%]" delay={0.8} duration={7.5}>
-          <SubjectsCard />
-        </Floating>
-        <Floating className="absolute left-[18%] top-[7%]" delay={0.95} duration={6} distance={8}>
-          <AiAssistantBadge />
-        </Floating>
-        <Floating className="absolute right-[24%] top-[10%]" delay={1.4} duration={6.5} distance={8}>
-          <LearningLoopCard className="w-64" />
-        </Floating>
-        <Floating className="absolute left-[3%] top-[46%]" delay={1.1} duration={7} distance={8}>
-          <StudentPhotoCard src={studentsGroupImg} alt="Students studying together" caption="Study squads, IRL energy 📚" className="w-60" />
-        </Floating>
-        <Floating className="absolute right-[22%] bottom-[8%]" delay={1.25} duration={6.5} distance={9}>
-          <StudentPhotoCard src={studentLectureImg} alt="Student taking notes in a lecture" caption="Locked in for finals ✍️" className="w-52" />
+        <Floating className="absolute right-[6%] bottom-[14%]" delay={0.8} duration={7.5}>
+          <LeaderboardCard />
         </Floating>
       </div>
 
@@ -380,18 +355,12 @@ export function LandingHero() {
           <p className="text-lg sm:text-xl text-white/90 max-w-xl mx-auto mb-10 leading-relaxed">
             Chat with AI, stack XP, climb the leaderboard, and crush your BCom &amp; MBA subjects — from Financial Accounting to Marketing Management. Your classes, minus the boring parts.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link
               href="/sign-up"
               className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold transition-transform hover:scale-105 bg-white text-fuchsia-600 rounded-full shadow-lg"
             >
               Get started — it's free
-            </Link>
-            <Link
-              href="/sign-in"
-              className="inline-flex items-center justify-center px-8 py-4 text-base font-semibold transition-colors bg-white/15 text-white border border-white/40 hover:bg-white/25 rounded-full backdrop-blur-sm"
-            >
-              Sign in
             </Link>
           </div>
         </motion.div>
