@@ -442,11 +442,11 @@ export const TESTIMONIAL_WALL: WallTestimonial[] = [
 /** Product options for the testimonial submission form. */
 export const TESTIMONIAL_PRODUCT_OPTIONS = [
   "Build with AI: The Studio Course",
-  "AI for Management Faculty",
+  "AI for Placements & Interviews",
   "Prompt to Product",
   "Student AI Career Kit",
-  "AI Course Design Kit",
-  "Faculty AI Starter Kit",
+  "Create Videos with AI",
+  "Student AI Starter Kit",
 ];
 
 export interface Post {

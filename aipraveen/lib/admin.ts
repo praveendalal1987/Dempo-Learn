@@ -35,11 +35,11 @@ export interface AdminProductRow {
 }
 export const ADMIN_PRODUCTS: AdminProductRow[] = [
   { title: "Build with AI: The Studio Course", kind: "VIDEO COURSE", price: "₹4,999", sales: 214, renew: "₹2,250" },
-  { title: "AI for Management Faculty", kind: "VIDEO COURSE", price: "₹3,499", sales: 96, renew: "₹1,570" },
+  { title: "AI for Placements & Interviews", kind: "VIDEO COURSE", price: "₹3,499", sales: 176, renew: "₹1,570" },
   { title: "Prompt to Product", kind: "VIDEO COURSE", price: "₹2,999", sales: 148, renew: "₹1,350" },
   { title: "Student AI Career Kit", kind: "STARTER KIT", price: "₹699", sales: 388, renew: "₹310" },
   { title: "AI Course Design Kit", kind: "STARTER KIT", price: "₹999", sales: 121, renew: "₹450" },
-  { title: "Faculty AI Starter Kit", kind: "STARTER KIT · FREE", price: "Free", sales: 1042, renew: "Free" },
+  { title: "Student AI Starter Kit", kind: "STARTER KIT · FREE", price: "Free", sales: 1042, renew: "Free" },
   { title: "Create Videos with AI", kind: "VIDEO COURSE · BONUS", price: "₹1,499", sales: 173, renew: "₹670" },
 ];
 
@@ -55,9 +55,9 @@ export interface AdminOrderRow {
 export const ADMIN_ORDERS: AdminOrderRow[] = [
   { id: "#AP-2141", who: "asha.menon@gmail.com", product: "Studio Course", amount: "₹4,999", status: "PAID", canRefund: true },
   { id: "#AP-2140", who: "rohan.s@zoho.com", product: "Prompt to Product · renewal", amount: "₹1,350", status: "RENEWAL", canRefund: false },
-  { id: "#AP-2139", who: "kavita.rao@spjimr.org", product: "AI for Management Faculty", amount: "₹3,499", status: "PAID", canRefund: true },
+  { id: "#AP-2139", who: "neha.kulkarni@gmail.com", product: "AI for Placements & Interviews", amount: "₹3,499", status: "PAID", canRefund: true },
   { id: "#AP-2138", who: "j.thomas@gmail.com", product: "Studio Course", amount: "₹4,999", status: "REFUNDED", canRefund: false },
-  { id: "#AP-2137", who: "prof.sk@christ.edu", product: "Faculty AI Starter Kit", amount: "Free", status: "FREE", canRefund: false },
+  { id: "#AP-2137", who: "aditya.rao@gmail.com", product: "Student AI Starter Kit", amount: "Free", status: "FREE", canRefund: false },
   { id: "#AP-2136", who: "meera.p@iimidr.ac.in", product: "AI Course Design Kit", amount: "₹999", status: "FAILED", canRefund: false },
 ];
 
@@ -72,9 +72,9 @@ export const ACCESS_ROWS: AccessRow[] = [
   { email: "asha.menon@gmail.com", product: "Student AI Career Kit", expires: "12 AUG 2026", status: "EXPIRING" },
   { email: "asha.menon@gmail.com", product: "Studio Course", expires: "23 MAY 2027", status: "ACTIVE" },
   { email: "asha.menon@gmail.com", product: "Prompt to Product", expires: "12 JUN 2026", status: "EXPIRED" },
-  { email: "rk.prof@nmims.edu", product: "AI for Management Faculty", expires: "30 JUL 2026", status: "EXPIRING" },
+  { email: "neha.kulkarni@gmail.com", product: "AI for Placements & Interviews", expires: "30 JUL 2026", status: "EXPIRING" },
   { email: "rohan.s@zoho.com", product: "Prompt to Product", expires: "18 JUL 2027", status: "ACTIVE" },
-  { email: "prof.sk@christ.edu", product: "Faculty AI Starter Kit", expires: "02 MAR 2027", status: "ACTIVE" },
+  { email: "aditya.rao@gmail.com", product: "Student AI Starter Kit", expires: "02 MAR 2027", status: "ACTIVE" },
 ];
 
 export interface SubmissionRow {

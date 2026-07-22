@@ -192,20 +192,16 @@ export interface KitItem {
   title: string;
   len: string;
 }
-/** Faculty AI Starter Kit contents manifest. */
+/** Student AI Starter Kit contents manifest. */
 export const KIT_CONTENTS: KitItem[] = [
-  { kind: "BRIEF", title: "Grading with AI, not by AI", len: "12 MIN READ" },
-  { kind: "EXERCISE", title: "The 20-minute case generator", len: "8 MIN READ" },
-  { kind: "EXERCISE", title: "Socratic AI: debate practice", len: "7 MIN READ" },
-  { kind: "EXERCISE", title: "Dataset detective", len: "9 MIN READ" },
-  { kind: "EXERCISE", title: "The rubric rebuilder", len: "6 MIN READ" },
-  { kind: "EXERCISE", title: "AI office-hours simulator", len: "8 MIN READ" },
-  {
-    kind: "TEMPLATE",
-    title: "Session plan template (AI-integrated)",
-    len: "TEMPLATE",
-  },
-  { kind: "DATASET", title: "Sample: student feedback dataset", len: "240 ROWS" },
+  { kind: "BRIEF", title: "Your first AI build, step by step", len: "12 MIN READ" },
+  { kind: "EXERCISE", title: "Turn any idea into a one-page spec", len: "8 MIN READ" },
+  { kind: "EXERCISE", title: "Prompt pack: 20 prompts that actually work", len: "7 MIN READ" },
+  { kind: "EXERCISE", title: "Clean a messy dataset with AI", len: "9 MIN READ" },
+  { kind: "EXERCISE", title: "Make your project look designed", len: "6 MIN READ" },
+  { kind: "EXERCISE", title: "Explain your project in 90 seconds", len: "8 MIN READ" },
+  { kind: "TEMPLATE", title: "Portfolio project template", len: "TEMPLATE" },
+  { kind: "DATASET", title: "Sample: starter project dataset", len: "240 ROWS" },
 ];
 
 export interface ResourceDoc {

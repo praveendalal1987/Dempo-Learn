@@ -32,7 +32,7 @@ export function SiteHeader() {
         }}
       >
         <Link href={routes.home} className="plain" style={{ display: "flex" }}>
-          <Logo variant="onLight" />
+          <Logo variant="onLight" tagline={false} />
         </Link>
         <nav
           style={{
