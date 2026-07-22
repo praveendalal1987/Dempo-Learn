@@ -1,3 +1,4 @@
+import path from "path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -72,6 +73,24 @@ app.use(
 );
 
 app.use("/api", router);
+
+// Single-origin production: serve the built web app for non-API GET routes so
+// the SPA and API share one host (relative /api calls + Clerk cookies just
+// work). Enabled by setting WEB_DIST_DIR to the built web output (dist/public);
+// left unset in local dev, where Vite serves the web app separately.
+const webDistDir = process.env.WEB_DIST_DIR;
+if (webDistDir) {
+  const absoluteWebDir = path.resolve(webDistDir);
+  app.use(express.static(absoluteWebDir));
+  // SPA fallback: send index.html for client-side routes (never for /api).
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(absoluteWebDir, "index.html"));
+  });
+}
 
 // Central error handler: record unexpected API errors in the activity log.
 app.use(

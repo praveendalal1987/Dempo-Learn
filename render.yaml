@@ -1,0 +1,45 @@
+# Render Blueprint — free single-service deploy of Dempo (API + web on one origin).
+# Docs: https://render.com/docs/blueprint-spec
+#
+# One Node web service builds the React app and the Express API, then the API
+# serves the built SPA (WEB_DIST_DIR) so everything shares one origin — Clerk
+# cookie auth and relative /api calls work without CORS/proxy setup.
+#
+# After creating the service, set the secret env vars (sync:false) in the Render
+# dashboard: DATABASE_URL, CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY,
+# VITE_CLERK_PUBLISHABLE_KEY. See DEPLOY.md.
+
+services:
+  - type: web
+    name: dempo
+    runtime: node
+    plan: free
+    region: singapore # closest free Render region to India
+    branch: main
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    buildCommand: >-
+      corepack enable &&
+      corepack prepare pnpm@11.15.1 --activate &&
+      pnpm install --no-frozen-lockfile &&
+      pnpm --filter @workspace/dempo build &&
+      pnpm --filter @workspace/api-server build
+    startCommand: node artifacts/api-server/dist/index.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      # The API serves the built SPA from here (single origin).
+      - key: WEB_DIST_DIR
+        value: ./artifacts/dempo/dist/public
+      # Secrets — set these in the Render dashboard (not committed).
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      # Build-time: baked into the web bundle. Same value as CLERK_PUBLISHABLE_KEY.
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
