@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { SignOutButton, useAuth } from "@clerk/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, BookOpen, GraduationCap, LayoutDashboard, Settings, MessageSquare, Menu, ScrollText, Users as UsersIcon, CalendarDays } from "lucide-react";
+import { LogOut, BookOpen, GraduationCap, LayoutDashboard, Settings, MessageSquare, Menu, ScrollText, Users as UsersIcon, CalendarDays, NotebookPen } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       : [
           { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
           { name: "Courses", href: "/courses", icon: BookOpen },
+          { name: "Journal", href: "/journal", icon: NotebookPen },
           ...(isTeacher ? [{ name: "Cohorts", href: "/cohorts", icon: UsersIcon }] : []),
           ...(isTeacher ? [{ name: "Feedback", href: "/feedback", icon: MessageSquare }] : []),
           { name: "Calendar", href: "/calendar", icon: CalendarDays },

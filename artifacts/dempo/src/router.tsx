@@ -9,6 +9,7 @@ import { LandingPage, SignInPage, SignUpPage, RolePickerPage } from "@/pages/aut
 import DashboardPage from "@/pages/dashboard";
 import CoursesPage from "@/pages/courses";
 import CohortsPage from "@/pages/cohorts";
+import JournalPage from "@/pages/journal";
 import CourseViewPage from "@/pages/course-view";
 import AssignmentViewPage from "@/pages/assignment-view";
 import QuizViewPage from "@/pages/quiz-view";
@@ -99,6 +100,9 @@ export function AppRouter() {
         </Route>
         <Route path="/cohorts">
           <ProtectedRoute component={CohortsPage} />
+        </Route>
+        <Route path="/journal">
+          <ProtectedRoute component={JournalPage} />
         </Route>
         <Route path="/course/:id">
           {params => <ProtectedRoute component={CourseViewPage} id={params.id} />}

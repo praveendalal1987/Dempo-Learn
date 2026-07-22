@@ -17,6 +17,7 @@ import cohortsRouter from "./cohorts";
 import oversightRouter from "./oversight";
 import feedbackRouter from "./feedback";
 import groupsRouter from "./groups";
+import journalRouter from "./journal";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(cohortsRouter);
 router.use(oversightRouter);
 router.use(feedbackRouter);
 router.use(groupsRouter);
+router.use(journalRouter);
 
 export default router;
