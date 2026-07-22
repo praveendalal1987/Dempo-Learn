@@ -43,12 +43,12 @@ export interface Quote {
 }
 export const HOME_TESTIMONIALS: Quote[] = [
   {
-    text: "I rebuilt my entire Marketing Analytics course using the faculty programme. Students noticed within two weeks.",
-    who: "DR. KAVITA RAO · ASSOCIATE PROFESSOR",
+    text: "Finished the Studio Course in six weekends and shipped an internal tool my internship team still uses.",
+    who: "ROHAN S. · MBA STUDENT",
   },
   {
-    text: "Finished the Studio Course in six weekends and shipped an internal tool my manager still uses.",
-    who: "ROHAN S. · BUSINESS ANALYST",
+    text: "The Career Kit briefs became my whole portfolio — two of them came up in my placement interviews.",
+    who: "ANANYA I. · MBA STUDENT",
   },
 ];
 
@@ -403,15 +403,15 @@ export interface WallTestimonial {
 export const TESTIMONIAL_WALL: WallTestimonial[] = [
   {
     stars: "★★★★★",
-    text: "Finished the Studio Course in six weekends and shipped an internal tool my manager still uses. The pace being mine made all the difference.",
+    text: "Finished the Studio Course in six weekends and shipped an internal tool my internship team still uses. The pace being mine made all the difference.",
     name: "Rohan Shetty",
-    meta: "BUSINESS ANALYST · STUDIO COURSE",
+    meta: "MBA STUDENT · STUDIO COURSE",
   },
   {
     stars: "★★★★★",
-    text: "I rebuilt my Marketing Analytics course with the faculty programme. Students noticed within two weeks — so did the dean.",
-    name: "Dr. Kavita Rao",
-    meta: "ASSOCIATE PROFESSOR · AI FOR MANAGEMENT FACULTY",
+    text: "Walked into placement season with a portfolio and interview answers I could actually defend. Cleared three of the four companies I sat for.",
+    name: "Sneha Reddy",
+    meta: "BBA STUDENT · AI FOR PLACEMENTS",
   },
   {
     stars: "★★★★★",
@@ -423,19 +423,19 @@ export const TESTIMONIAL_WALL: WallTestimonial[] = [
     stars: "★★★★",
     text: "Honest, unhyped, practical. The one-year window pushed me to actually finish, which no lifetime course ever managed.",
     name: "Vikram Nair",
-    meta: "PRODUCT MANAGER · PROMPT TO PRODUCT",
+    meta: "B.TECH FINAL YEAR · PROMPT TO PRODUCT",
   },
   {
     stars: "★★★★★",
-    text: "The free kit alone changed how I run tutorials. Bought the full course a month later.",
-    name: "Prof. Suresh Kulkarni",
-    meta: "ASSISTANT PROFESSOR · FACULTY STARTER KIT",
+    text: "The free starter kit alone got my first real project shipped in a weekend. I bought the full course a week later.",
+    name: "Aditya Rao",
+    meta: "ENGINEERING STUDENT · STUDENT AI STARTER KIT",
   },
   {
     stars: "★★★★★",
-    text: "Our three-day rebuild sprint gave us a course our accreditation reviewers singled out. Worth every rupee.",
-    name: "Dr. Meera Pillai",
-    meta: "IQAC COORDINATOR · FDP ENGAGEMENT",
+    text: "Made a demo video for my competition entry that actually looked professional. The judges brought it up.",
+    name: "Fatima Sheikh",
+    meta: "COMPUTER SCIENCE · CREATE VIDEOS WITH AI",
   },
 ];
 

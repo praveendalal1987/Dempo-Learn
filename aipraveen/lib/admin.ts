@@ -115,9 +115,9 @@ export interface TestimonialQueueItem {
   text: string;
 }
 export const TESTIMONIAL_QUEUE: TestimonialQueueItem[] = [
-  { name: "Divya Krishnan", meta: "HR MANAGER · PROMPT TO PRODUCT", stars: "★★★★★", text: "Built a leave-tracker my whole team uses. I have no tech background. Still slightly amazed." },
-  { name: "Prof. Arjun Mehta", meta: "ASSISTANT PROFESSOR · FACULTY KIT", stars: "★★★★", text: "The grading brief alone was worth signing up. Would love a version for large cohorts." },
-  { name: "Sneha R.", meta: "MBA STUDENT · CAREER KIT", stars: "★★★★★", text: "Used the portfolio briefs in my summer placement interviews. Two panelists asked about them." },
+  { name: "Divya Krishnan", meta: "MBA STUDENT · PROMPT TO PRODUCT", stars: "★★★★★", text: "Built a leave-tracker my college club actually uses. I have no coding background. Still slightly amazed." },
+  { name: "Arjun Mehta", meta: "B.TECH STUDENT · STUDENT AI STARTER KIT", stars: "★★★★", text: "The starter exercises got me unstuck and building on day one. Would love a few more advanced ones." },
+  { name: "Sneha R.", meta: "BBA STUDENT · CAREER KIT", stars: "★★★★★", text: "Used the portfolio briefs in my summer placement interviews. Two panelists asked about them." },
 ];
 
 export interface PipelineColumn {

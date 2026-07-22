@@ -177,13 +177,13 @@ export interface ProductQuote {
 export const STUDIO_PRODUCT_TESTIMONIALS: ProductQuote[] = [
   {
     stars: "★★★★★",
-    text: "Finished in six weekends and shipped an internal tool my manager still uses.",
-    who: "ROHAN S. · BUSINESS ANALYST",
+    text: "Finished in six weekends and shipped an internal tool my internship team still uses.",
+    who: "ROHAN S. · MBA STUDENT",
   },
   {
     stars: "★★★★",
     text: "The one-year window pushed me to actually finish, which no lifetime course ever managed.",
-    who: "VIKRAM N. · PRODUCT MANAGER",
+    who: "VIKRAM N. · B.TECH FINAL YEAR",
   },
 ];
 
