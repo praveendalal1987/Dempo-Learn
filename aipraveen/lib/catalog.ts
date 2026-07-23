@@ -6,7 +6,6 @@
 import { formatINR, renewalPrice } from "./format";
 
 export type ProductKind = "course" | "kit";
-export type Audience = "students" | "faculty";
 
 export interface Product {
   id: string;
@@ -21,13 +20,10 @@ export interface Product {
   hours?: string;
   resourceCount: number;
   thumbBg: string;
-  audience: Audience;
   /** Renewal percentage of full price (default 45). */
   renewPercent: number;
   /** Included free with any paid course. */
   bonus?: boolean;
-  /** Legacy / faculty-era product, kept for existing owners. */
-  legacy?: boolean;
 }
 
 export const DEFAULT_RENEW_PERCENT = 45;
@@ -45,7 +41,6 @@ export const PRODUCTS: Product[] = [
     hours: "30 hours",
     resourceCount: 18,
     thumbBg: "#12233F",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
   },
   {
@@ -60,7 +55,6 @@ export const PRODUCTS: Product[] = [
     hours: "16 hours",
     resourceCount: 14,
     thumbBg: "#0E1B31",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
   },
   {
@@ -75,7 +69,6 @@ export const PRODUCTS: Product[] = [
     hours: "14 hours",
     resourceCount: 10,
     thumbBg: "#16294A",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
   },
   {
@@ -89,23 +82,20 @@ export const PRODUCTS: Product[] = [
     price: 699,
     resourceCount: 22,
     thumbBg: "#12233F",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
   },
   {
-    id: "coursedesign",
-    slug: "ai-course-design-kit",
+    id: "research",
+    slug: "ai-research-assistant-kit",
     kindLabel: "STARTER KIT",
     kind: "kit",
-    title: "AI Course Design Kit",
+    title: "AI Research Assistant Kit",
     outcome:
-      "Templates and worked examples to build an AI-integrated course outline in a weekend.",
+      "Templates and workflows to research faster and write sharper reports, papers and project docs — AI does the grunt work, you do the thinking.",
     price: 999,
     resourceCount: 16,
     thumbBg: "#0E1B31",
-    audience: "faculty",
     renewPercent: DEFAULT_RENEW_PERCENT,
-    legacy: true,
   },
   {
     id: "starterkit",
@@ -118,7 +108,6 @@ export const PRODUCTS: Product[] = [
     price: 0,
     resourceCount: 8,
     thumbBg: "#16294A",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
   },
   {
@@ -133,7 +122,6 @@ export const PRODUCTS: Product[] = [
     hours: "8 hours",
     resourceCount: 6,
     thumbBg: "#0E1B31",
-    audience: "students",
     renewPercent: DEFAULT_RENEW_PERCENT,
     bonus: true,
   },
@@ -148,19 +136,12 @@ export function featuredProducts(): Product[] {
   return FEATURED_IDS.map((id) => getProduct(id)!).filter(Boolean);
 }
 
-export type StoreFilter =
-  | "All"
-  | "Video courses"
-  | "Starter kits"
-  | "For students"
-  | "For faculty";
+export type StoreFilter = "All" | "Video courses" | "Starter kits";
 
 export const STORE_FILTERS: StoreFilter[] = [
   "All",
   "Video courses",
   "Starter kits",
-  "For students",
-  "For faculty",
 ];
 
 export function filterProducts(filter: StoreFilter): Product[] {
@@ -169,10 +150,6 @@ export function filterProducts(filter: StoreFilter): Product[] {
       return PRODUCTS.filter((p) => p.kind === "course");
     case "Starter kits":
       return PRODUCTS.filter((p) => p.kind === "kit");
-    case "For students":
-      return PRODUCTS.filter((p) => p.audience === "students");
-    case "For faculty":
-      return PRODUCTS.filter((p) => p.audience === "faculty");
     default:
       return PRODUCTS;
   }

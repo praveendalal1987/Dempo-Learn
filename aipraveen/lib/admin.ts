@@ -38,7 +38,7 @@ export const ADMIN_PRODUCTS: AdminProductRow[] = [
   { title: "AI for Placements & Interviews", kind: "VIDEO COURSE", price: "₹3,499", sales: 176, renew: "₹1,570" },
   { title: "Prompt to Product", kind: "VIDEO COURSE", price: "₹2,999", sales: 148, renew: "₹1,350" },
   { title: "Student AI Career Kit", kind: "STARTER KIT", price: "₹699", sales: 388, renew: "₹310" },
-  { title: "AI Course Design Kit", kind: "STARTER KIT", price: "₹999", sales: 121, renew: "₹450" },
+  { title: "AI Research Assistant Kit", kind: "STARTER KIT", price: "₹999", sales: 121, renew: "₹450" },
   { title: "Student AI Starter Kit", kind: "STARTER KIT · FREE", price: "Free", sales: 1042, renew: "Free" },
   { title: "Create Videos with AI", kind: "VIDEO COURSE · BONUS", price: "₹1,499", sales: 173, renew: "₹670" },
 ];
@@ -58,7 +58,7 @@ export const ADMIN_ORDERS: AdminOrderRow[] = [
   { id: "#AP-2139", who: "neha.kulkarni@gmail.com", product: "AI for Placements & Interviews", amount: "₹3,499", status: "PAID", canRefund: true },
   { id: "#AP-2138", who: "j.thomas@gmail.com", product: "Studio Course", amount: "₹4,999", status: "REFUNDED", canRefund: false },
   { id: "#AP-2137", who: "aditya.rao@gmail.com", product: "Student AI Starter Kit", amount: "Free", status: "FREE", canRefund: false },
-  { id: "#AP-2136", who: "meera.p@iimidr.ac.in", product: "AI Course Design Kit", amount: "₹999", status: "FAILED", canRefund: false },
+  { id: "#AP-2136", who: "meera.pillai@gmail.com", product: "AI Research Assistant Kit", amount: "₹999", status: "FAILED", canRefund: false },
 ];
 
 export type AccessChip = "ACTIVE" | "EXPIRING" | "EXPIRED";

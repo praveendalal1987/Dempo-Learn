@@ -332,7 +332,7 @@ export const TESTIMONIAL_PRODUCT_OPTIONS = [
   "AI for Placements & Interviews",
   "Prompt to Product",
   "Student AI Career Kit",
-  "Create Videos with AI",
+  "AI Research Assistant Kit",
   "Student AI Starter Kit",
 ];
 
