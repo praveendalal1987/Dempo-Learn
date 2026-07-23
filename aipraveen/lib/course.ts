@@ -153,8 +153,8 @@ export const STUDIO_FAQS: Faq[] = [
     a: "No, and there never will be. The course is designed to be complete on its own — that is the whole point of self-paced.",
   },
   {
-    q: "What if it isn't for me?",
-    a: "Full refund within 7 days of purchase, no questions asked. Write to support@aipraveen.com.",
+    q: "Can I get a refund?",
+    a: "No — because you get complete access the moment you buy, all purchases are final and non-refundable. So decide before you buy: the preview is free, the curriculum lists everything inside, and the practice library is free to browse. Unsure? Email support@aipraveen.com before purchasing.",
   },
 ];
 

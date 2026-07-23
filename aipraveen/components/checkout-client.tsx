@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Container } from "@/components/ui";
 import { fieldStyle, primaryButtonStyle } from "@/components/form";
 import { formatINR } from "@/lib/format";
+import { routes } from "@/lib/routes";
 import type { LineItem } from "@/lib/checkout";
 import { completeCheckout } from "@/app/(site)/checkout/actions";
 
@@ -219,9 +221,16 @@ export function CheckoutClient({
             ? "Secured by Razorpay — UPI, cards, netbanking."
             : "Test mode — no real charge (Razorpay keys not configured)."}
       </p>
-      {!line.isFree && line.kind !== "competition" && (
+      {line.isFree ? (
         <p style={{ color: "var(--text-secondary)", fontSize: 12, margin: "6px 0 0" }}>
-          7-day refund on courses, no questions asked.
+          By continuing you agree to our <Link href={routes.terms}>Terms</Link> and{" "}
+          <Link href={routes.privacy}>Privacy Policy</Link>.
+        </p>
+      ) : (
+        <p style={{ color: "var(--text-secondary)", fontSize: 12, margin: "6px 0 0" }}>
+          <strong>All sales are final — no refunds once purchased.</strong> By paying you agree to our{" "}
+          <Link href={routes.terms}>Terms</Link> and{" "}
+          <Link href={routes.refund}>Refund Policy</Link>.
         </p>
       )}
     </Container>

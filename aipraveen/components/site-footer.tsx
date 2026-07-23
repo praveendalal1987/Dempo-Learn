@@ -124,7 +124,18 @@ export function SiteFooter() {
           }}
         >
           <span>© 2026 PRAVEEN DALAL · GOA, INDIA</span>
-          <span>7-DAY REFUND ON COURSES · UPI / CARDS / NETBANKING</span>
+          <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <Link href={routes.terms} style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
+              TERMS
+            </Link>
+            <Link href={routes.privacy} style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
+              PRIVACY
+            </Link>
+            <Link href={routes.refund} style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
+              REFUNDS
+            </Link>
+          </span>
+          <span>UPI · CARDS · NETBANKING</span>
         </div>
       </div>
     </footer>

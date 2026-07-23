@@ -26,6 +26,9 @@ export const routes = {
   expired: (slug: string) => `/expired/${slug}`,
   admin: "/admin",
   emails: "/admin/emails",
+  terms: "/legal/terms",
+  privacy: "/legal/privacy",
+  refund: "/legal/refund",
 } as const;
 
 /** Primary marketing nav (order matters). */

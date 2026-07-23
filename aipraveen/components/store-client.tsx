@@ -121,7 +121,7 @@ export function StoreClient() {
         >
           <span>INSTANT ACCESS</span>
           <span>LEARN ON ANY DEVICE</span>
-          <span>7-DAY REFUND ON COURSES</span>
+          <span>SECURE CHECKOUT</span>
           <span>UPI · CARDS · NETBANKING</span>
         </Container>
       </section>

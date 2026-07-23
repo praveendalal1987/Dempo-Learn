@@ -142,7 +142,7 @@ export function KitDetail({ product }: { product: Product }) {
             <p style={{ color: "var(--text-secondary)", fontSize: 11.5, margin: "16px 0 0" }}>
               {isFree
                 ? "Your login and receipts go to this email. No password — a magic link signs you in."
-                : "Payments via Razorpay — UPI, cards, netbanking. 7-day refund."}
+                : "Payments via Razorpay — UPI, cards, netbanking. All sales final."}
             </p>
           </div>
         </aside>

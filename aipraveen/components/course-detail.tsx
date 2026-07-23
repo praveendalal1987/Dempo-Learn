@@ -296,7 +296,7 @@ export function CourseDetail({ product }: { product: Product }) {
               {isFlagship && <Bullet>The book Applied AI, Actually Applied, free</Bullet>}
               <Bullet>Access to the 100-project practice library</Bullet>
               <Bullet>Access until {accessUntil}</Bullet>
-              {product.price > 0 && <Bullet>7-day refund, no questions asked</Bullet>}
+              {product.price > 0 && <Bullet>No auto-renewal — you&apos;re never charged automatically</Bullet>}
             </ul>
             <p style={{ color: "var(--text-secondary)", fontSize: 11.5, margin: "16px 0 0" }}>
               Payments via Razorpay — UPI, cards, netbanking.
