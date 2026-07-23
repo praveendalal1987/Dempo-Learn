@@ -8,6 +8,40 @@ import { formatINR } from "@/lib/format";
 import type { LineItem } from "@/lib/checkout";
 import { completeCheckout } from "@/app/(site)/checkout/actions";
 
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+interface RazorpayInstance {
+  open: () => void;
+  on: (event: string, cb: (e: unknown) => void) => void;
+}
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => RazorpayInstance;
+  }
+}
+
+/** Load the Razorpay checkout SDK once. */
+function loadRazorpay(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) return resolve();
+    const existing = document.getElementById("razorpay-sdk") as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("sdk")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "razorpay-sdk";
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("sdk"));
+    document.body.appendChild(s);
+  });
+}
+
 export function CheckoutClient({
   line,
   prefillEmail,
@@ -25,18 +59,75 @@ export function CheckoutClient({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const failedUrl = `/checkout/failed?${new URLSearchParams(
+    Object.entries(query).filter(([, v]) => v) as [string, string][],
+  ).toString()}`;
+
+  /** Free items and dev/no-keys mode: fulfil directly, no charge. */
+  async function payMock() {
+    const res = await completeCheckout({ email, coupon, ...query });
+    if (res.ok && res.redirect) router.push(res.redirect);
+    else {
+      setError(res.error ?? "Payment could not be completed.");
+      setBusy(false);
+    }
+  }
+
+  /** Real Razorpay: create order -> widget -> verify signature -> fulfil. */
+  async function payRazorpay() {
+    const orderRes = await fetch("/api/checkout/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query),
+    });
+    if (!orderRes.ok) {
+      const d = await orderRes.json().catch(() => ({}));
+      setError(d.error ?? "Could not start payment.");
+      setBusy(false);
+      return;
+    }
+    const order = await orderRes.json();
+
+    try {
+      await loadRazorpay();
+    } catch {
+      setError("Couldn't load the payment window. Check your connection and retry.");
+      setBusy(false);
+      return;
+    }
+
+    const rzp = new window.Razorpay!({
+      key: order.keyId,
+      order_id: order.orderId,
+      amount: order.amount,
+      currency: order.currency,
+      name: order.name,
+      description: order.description,
+      prefill: { email },
+      theme: { color: "#12233F" },
+      handler: async (resp: RazorpayResponse) => {
+        const vr = await fetch("/api/checkout/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...resp, email, ...query }),
+        });
+        const data = await vr.json().catch(() => ({}));
+        if (vr.ok && data.redirect) router.push(data.redirect);
+        else router.push(failedUrl);
+      },
+      modal: { ondismiss: () => setBusy(false) },
+    });
+    rzp.on("payment.failed", () => router.push(failedUrl));
+    rzp.open();
+  }
+
   async function pay() {
     setBusy(true);
     setError(null);
-    // In production, the Razorpay widget would run here first, then on a
-    // verified payment we'd call completeCheckout. Without keys we go straight
-    // to the mock completion.
-    const res = await completeCheckout({ email, coupon, ...query });
-    if (res.ok && res.redirect) {
-      router.push(res.redirect);
+    if (line.isFree || !razorpayConfigured) {
+      await payMock();
     } else {
-      setError(res.error ?? "Payment could not be completed.");
-      setBusy(false);
+      await payRazorpay();
     }
   }
 
