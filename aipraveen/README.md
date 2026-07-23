@@ -54,11 +54,21 @@ Request a link from `/login`, then open the URL printed in the server console.
 - **Admin:** dashboard KPIs + chart, products, orders, access, submissions,
   testimonials, industry pipeline; 5 transactional email templates.
 
+## Data layer
+
+The app talks only to `lib/data.ts`, which delegates to one of two stores
+(`lib/store/`): the **in-memory** store (dev, no setup) or the **Drizzle/Postgres**
+store (when `DATABASE_URL` is set — Supabase). Same async interface, so switching
+is just an env var. The DB store is verified end-to-end against real Postgres
+via `pnpm verify:db` (runs against in-process PGlite — no cloud DB needed).
+
 ## Going to production
 
-1. Provision Supabase (Mumbai), set `DATABASE_URL`, run `pnpm db:push`, then
-   port `lib/data.ts` from the in-memory store to Drizzle (same async API).
-2. Add Razorpay keys → checkout switches from mock to the real widget + webhook
-   (`/api/razorpay/webhook`).
-3. Add MSG91 keys + templates → emails send for real (`lib/email.ts`).
-4. Wire Cloudflare Stream signed playback into the player's `VideoArea` stub.
+1. **Database:** provision Supabase (Mumbai), set `DATABASE_URL`, run
+   `pnpm db:push` (or `db:migrate`) to create the tables, then `pnpm db:seed` to
+   create the admin account. The app now uses Postgres automatically.
+2. **Payments:** add Razorpay keys → checkout switches from mock to the real
+   widget + webhook (`/api/razorpay/webhook`).
+3. **Email:** add MSG91 keys + templates → emails send for real (`lib/email.ts`).
+4. **Video:** wire Cloudflare Stream signed playback into the player's
+   `VideoArea` stub.
