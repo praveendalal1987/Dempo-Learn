@@ -54,7 +54,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <Label className="text-muted-foreground">Account ID</Label>
-                <div className="font-mono text-xs mt-1 text-muted-foreground bg-muted p-2 rounded w-fit">{user?.id}</div>
+                <div className="font-mono text-xs mt-1 text-muted-foreground bg-muted p-2 rounded break-all">{user?.id}</div>
               </div>
             </div>
           </CardContent>

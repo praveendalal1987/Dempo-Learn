@@ -89,7 +89,7 @@ export default function CourseViewPage({ id }: { id: string }) {
   if (!course) return <div className="p-8 text-center text-muted-foreground mt-20">Course not found.</div>;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
       {/* Header */}
       <div className="bg-card rounded-xl p-8 border mb-8 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl pointer-events-none"></div>
@@ -99,7 +99,7 @@ export default function CourseViewPage({ id }: { id: string }) {
               {isTeacher ? 'Instructor View' : 'Student View'}
             </span>
           </div>
-          <h1 className="text-4xl font-serif font-bold text-foreground mb-3">{course.title}</h1>
+          <h1 className="text-2xl md:text-4xl font-serif font-bold text-foreground mb-3">{course.title}</h1>
           {course.description && <p className="text-lg text-muted-foreground max-w-2xl">{course.description}</p>}
           
           <div className="flex flex-wrap items-center gap-6 mt-8 pt-6 border-t border-border/50">
@@ -145,7 +145,7 @@ export default function CourseViewPage({ id }: { id: string }) {
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-6 h-12 w-full justify-start rounded-lg bg-transparent border-b p-0">
+        <TabsList className="mb-6 h-12 w-full justify-start rounded-lg bg-transparent border-b p-0 overflow-x-auto flex-nowrap [&>*]:shrink-0">
           <TabsTrigger value="assignments" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 h-full font-medium">
             Assignments
           </TabsTrigger>
@@ -194,7 +194,7 @@ export default function CourseViewPage({ id }: { id: string }) {
         </TabsList>
 
         <TabsContent value="assignments" className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
             <h2 className="text-xl font-serif font-semibold">Course Work</h2>
             {isTeacher && (
               <div className="flex gap-2">
@@ -580,7 +580,7 @@ function CreateAssignmentDialog({ courseId }: { courseId: number }) {
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="due">Due Date</Label>
               <Input id="due" type="datetime-local" value={dueDate} onChange={e => setDueDate(e.target.value)} />
@@ -593,7 +593,7 @@ function CreateAssignmentDialog({ courseId }: { courseId: number }) {
 
           <div className="space-y-3">
             <Label>Allowed Submission Types *</Label>
-            <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 border rounded-lg bg-muted/20">
               {[
                 { id: 'text', label: 'Rich Text', icon: FileText },
                 { id: 'file', label: 'File Upload', icon: FileText },
@@ -619,7 +619,7 @@ function CreateAssignmentDialog({ courseId }: { courseId: number }) {
           <div className="space-y-3">
             <Label>Assign To</Label>
             <div className="border rounded-lg bg-muted/20 p-4 space-y-3">
-              <div className="flex items-center gap-6">
+              <div className="flex flex-wrap items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
                   <input
                     type="radio"

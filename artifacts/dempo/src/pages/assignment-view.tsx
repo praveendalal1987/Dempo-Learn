@@ -31,7 +31,7 @@ export default function AssignmentViewPage({ id }: { id: string }) {
   if (!assignment) return <div className="p-8 text-center text-muted-foreground mt-20">Assignment not found.</div>;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
       <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 font-medium">
           <span className="hover:text-foreground cursor-pointer" onClick={() => window.history.back()}>Course</span>
@@ -209,7 +209,7 @@ function TeacherSubmissionsView({ assignmentId }: { assignmentId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-serif font-bold">Submissions Queue</h2>
         {submissions && submissions.length > 1 && (
           <Button variant="outline" size="sm" onClick={handleRerun} disabled={rerunMutation.isPending}>
@@ -220,8 +220,8 @@ function TeacherSubmissionsView({ assignmentId }: { assignmentId: number }) {
       </div>
       
       {submissions && submissions.length > 0 ? (
-        <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-left text-sm">
+        <div className="bg-card border rounded-xl overflow-x-auto shadow-sm">
+          <table className="w-full text-left text-sm min-w-[720px]">
             <thead className="bg-muted/50 font-medium text-muted-foreground border-b uppercase tracking-wider text-xs">
               <tr>
                 <th className="px-6 py-4">Student</th>

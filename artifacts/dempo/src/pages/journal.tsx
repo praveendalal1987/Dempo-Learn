@@ -121,7 +121,7 @@ export default function JournalPage() {
             value={String(selected?.id ?? "")}
             onValueChange={(v) => setCohortId(Number(v))}
           >
-            <SelectTrigger className="w-[240px]">
+            <SelectTrigger className="w-full sm:w-[240px]">
               <SelectValue placeholder="Choose a cohort" />
             </SelectTrigger>
             <SelectContent>
@@ -197,13 +197,22 @@ function Board({ cohort }: { cohort: JournalCohort }) {
     return m;
   }, [data]);
 
+  const byDay = useMemo(() => {
+    const m = new Map<string, Entry[]>();
+    for (const e of data?.entries ?? []) {
+      if (!m.has(e.entryDate)) m.set(e.entryDate, []);
+      m.get(e.entryDate)!.push(e);
+    }
+    return m;
+  }, [data]);
+
   const nameOf = (id: string) =>
     data?.members.find((mm) => mm.id === id)?.name || "Student";
 
   return (
     <>
       {/* Week nav */}
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setWeekStart(addDays(weekStart, -7))} title="Previous week">
             <ChevronLeft className="w-4 h-4" />
@@ -224,7 +233,7 @@ function Board({ cohort }: { cohort: JournalCohort }) {
         </Button>
       </div>
 
-      <Card className="shadow-sm overflow-hidden">
+      <Card className="hidden md:block shadow-sm overflow-hidden">
         <CardContent className="p-0 overflow-x-auto">
           <div className="min-w-[880px]">
             {/* header row */}
@@ -286,6 +295,55 @@ function Board({ cohort }: { cohort: JournalCohort }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mobile view — stacked by day (the wide board is desktop-only) */}
+      <div className="md:hidden space-y-5">
+        {isLoading ? (
+          <div className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" /></div>
+        ) : (data?.entries.length ?? 0) === 0 ? (
+          <div className="p-8 text-center text-muted-foreground bg-card border rounded-xl text-sm">
+            No entries this week yet. Tap "Add entry" to log what you worked on.
+          </div>
+        ) : (
+          days.map((d) => {
+            const ymd = toYMD(d);
+            const items = byDay.get(ymd) ?? [];
+            if (items.length === 0) return null;
+            const isToday = ymd === todayYMD;
+            return (
+              <div key={ymd}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-sm font-semibold ${isToday ? "text-primary" : "text-foreground"}`}>
+                    {d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                  </span>
+                  {isToday && <Badge variant="secondary" className="text-[10px]">Today</Badge>}
+                </div>
+                <div className="space-y-2">
+                  {items.map((e) => (
+                    <button
+                      key={e.id}
+                      onClick={() => setOpenEntry(e)}
+                      className={`w-full text-left rounded-xl border p-3 transition-colors
+                        ${e.highlighted ? "bg-amber-50 border-amber-300 dark:bg-amber-500/10" : "bg-card hover:bg-muted/50"}
+                        ${e.hidden ? "opacity-60" : ""}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {e.highlighted && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500 shrink-0" />}
+                        {e.hidden && <EyeOff className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                        <span className="text-sm font-medium truncate">
+                          {e.studentId === data?.currentUserId ? "You" : nameOf(e.studentId)}
+                        </span>
+                        {e.feedback && <MessageSquare className="w-3.5 h-3.5 text-primary shrink-0 ml-auto" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{e.content}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {addOpen && (
         <AddEntryDialog

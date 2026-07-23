@@ -31,7 +31,7 @@ export default function SubmissionViewPage({ id }: { id: string }) {
   if (!submission) return <div className="p-8 text-center text-muted-foreground">Submission not found.</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500 h-full flex flex-col">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full animate-in fade-in duration-500 h-full flex flex-col">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 font-medium">
         <span className="hover:text-foreground cursor-pointer" onClick={() => window.history.back()}>Assignment</span>
         <span>/</span>
@@ -45,7 +45,7 @@ export default function SubmissionViewPage({ id }: { id: string }) {
             <Avatar className="w-12 h-12 border bg-muted">
               <AvatarFallback className="text-lg"><UserCircle className="w-6 h-6 text-muted-foreground" /></AvatarFallback>
             </Avatar>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-xl font-bold font-serif flex items-center gap-2">
                 {submission.groupName && <UsersIcon className="w-5 h-5 text-primary" />}
                 {submission.groupName || submission.studentName}

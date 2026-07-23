@@ -183,7 +183,7 @@ export function EditAssignmentDialog({
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="edit-due">Due Date</Label>
               <Input id="edit-due" type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />

@@ -610,7 +610,7 @@ export default function DashboardPage() {
   const isTeacher = user?.role === "teacher";
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header>
         <h1 className="text-3xl font-serif font-bold text-foreground">
           Welcome back, {user?.name?.split(" ")[0] || "User"}

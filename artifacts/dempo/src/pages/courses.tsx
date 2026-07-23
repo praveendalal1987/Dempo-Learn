@@ -17,7 +17,7 @@ export default function CoursesPage() {
   const isTeacher = user?.role === "teacher";
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">Courses</h1>

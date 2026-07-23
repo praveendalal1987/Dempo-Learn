@@ -294,7 +294,7 @@ export function QuizFormDialog({
               </div>
             ))}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setQuestions((p) => [...p, emptyQuestion("multiple_choice")])}>
                 <ListChecks className="w-4 h-4 mr-2" /> Add Multiple Choice
               </Button>

@@ -275,7 +275,7 @@ function SessionDialog({
             <Label htmlFor="session-title">Title *</Label>
             <Input id="session-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Week 3 — Live lecture" required />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="session-start">Starts *</Label>
               <Input id="session-start" type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required />

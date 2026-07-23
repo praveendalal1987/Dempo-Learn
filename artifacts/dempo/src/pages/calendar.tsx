@@ -99,7 +99,7 @@ export default function CalendarPage() {
     setCursor(view === "month" ? addMonths(cursor, 1) : addWeeks(cursor, 1));
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6 md:space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">Calendar</h1>
@@ -146,13 +146,13 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <div className="hidden sm:grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                   <div key={d} className="py-1">{d}</div>
                 ))}
               </div>
 
-              <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border">
+              <div className="hidden sm:grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden border">
                 {days.map((day) => {
                   const dayEvents = events
                     .filter((e) => isSameDay(e.date, day))
@@ -200,6 +200,41 @@ export default function CalendarPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Mobile agenda — the 7-col grid is unreadable on phones */}
+              <div className="sm:hidden space-y-4">
+                {days.filter((day) => events.some((e) => isSameDay(e.date, day))).length === 0 ? (
+                  <div className="text-center text-sm text-muted-foreground py-8">No events in this period.</div>
+                ) : (
+                  days.map((day) => {
+                    const dayEvents = events
+                      .filter((e) => isSameDay(e.date, day))
+                      .sort((a, b) => a.date.getTime() - b.date.getTime());
+                    if (dayEvents.length === 0) return null;
+                    return (
+                      <div key={day.toISOString()}>
+                        <div className={`text-sm font-semibold mb-1.5 ${isToday(day) ? "text-primary" : ""}`}>
+                          {format(day, "EEE, MMM d")}
+                        </div>
+                        <div className="space-y-1.5">
+                          {dayEvents.map((e) =>
+                            e.link ? (
+                              <Link key={e.key} href={e.link} className="block text-sm px-3 py-2 rounded-lg bg-accent/10 text-accent-foreground border border-accent/30">
+                                <FileText className="w-3.5 h-3.5 inline mr-1 -mt-px" /> {e.title}{" "}
+                                <span className="text-muted-foreground">· due {format(e.date, "h:mm a")}</span>
+                              </Link>
+                            ) : (
+                              <div key={e.key} className="text-sm px-3 py-2 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                <CalendarClock className="w-3.5 h-3.5 inline mr-1 -mt-px" /> {format(e.date, "h:mm a")} {e.title}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">

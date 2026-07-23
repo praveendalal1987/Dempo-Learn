@@ -57,7 +57,7 @@ export default function CohortsPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
       {selectedId === null ? (
         <CohortList onOpen={setSelectedId} />
       ) : (

@@ -45,7 +45,7 @@ export default function QuizViewPage({ id }: { id: string }) {
     return <div className="p-8 text-center text-muted-foreground mt-20">Quiz not found.</div>;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto w-full animate-in fade-in duration-500">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4 font-medium">
         <Link href={`/course/${quiz.courseId}`} className="hover:text-foreground">Course</Link>
         <span>/</span>
@@ -494,14 +494,14 @@ function StudentQuizForm({ quiz }: { quiz: any }) {
         </Card>
       ))}
 
-      <div className="flex items-center justify-between bg-muted/20 border rounded-xl px-6 py-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-muted/20 border rounded-xl px-4 md:px-6 py-4">
         <span className="text-sm text-muted-foreground">
           {unanswered.length > 0
             ? `${unanswered.length} question${unanswered.length === 1 ? "" : "s"} unanswered`
             : "All questions answered"}
           {" · "}You can only submit once.
         </span>
-        <Button type="submit" size="lg" disabled={createAttempt.isPending} className="font-semibold px-8">
+        <Button type="submit" size="lg" disabled={createAttempt.isPending} className="font-semibold px-8 w-full sm:w-auto shrink-0">
           {createAttempt.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           Submit Quiz
         </Button>

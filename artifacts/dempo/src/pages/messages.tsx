@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListMessagesQueryKey } from "@workspace/api-client-react";
-import { Loader2, Send, Search, MessageSquare } from "lucide-react";
+import { Loader2, Send, Search, MessageSquare, ChevronLeft } from "lucide-react";
 import { format } from "date-fns";
 
 export default function MessagesPage() {
@@ -26,8 +26,8 @@ export default function MessagesPage() {
   
   return (
     <div className="h-[calc(100vh-4rem)] md:h-screen p-4 md:p-8 flex gap-6 max-w-7xl mx-auto w-full overflow-hidden">
-      {/* Inbox Sidebar */}
-      <Card className="w-full md:w-80 lg:w-96 flex flex-col shadow-sm shrink-0 h-full hidden md:flex border-r">
+      {/* Inbox Sidebar — full-width on mobile when no thread is open */}
+      <Card className={`${activeThread ? "hidden" : "flex"} md:flex w-full md:w-80 lg:w-96 flex-col shadow-sm shrink-0 h-full border-r`}>
         <div className="p-4 border-b">
           <h2 className="text-xl font-serif font-bold mb-4">Messages</h2>
           <div className="relative">
@@ -89,10 +89,10 @@ export default function MessagesPage() {
         </ScrollArea>
       </Card>
 
-      {/* Main Chat Area */}
-      <Card className="flex-1 flex flex-col shadow-sm border overflow-hidden h-full">
+      {/* Main Chat Area — hidden on mobile until a thread is open */}
+      <Card className={`${activeThread ? "flex" : "hidden md:flex"} flex-1 flex-col shadow-sm border overflow-hidden h-full`}>
         {activeThread ? (
-          <ChatThread thread={activeThread} />
+          <ChatThread thread={activeThread} onBack={() => setActiveThread(null)} />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground bg-muted/10">
             <MessageSquare className="w-16 h-16 text-muted-foreground/20 mb-4" />
@@ -105,7 +105,7 @@ export default function MessagesPage() {
   );
 }
 
-function ChatThread({ thread }: { thread: { courseId: number, otherUserId: string, name: string } }) {
+function ChatThread({ thread, onBack }: { thread: { courseId: number, otherUserId: string, name: string }, onBack: () => void }) {
   const { data: user } = useGetMe();
   const { data: messages, isLoading } = useListMessages(thread.courseId, { query: { enabled: !!thread.courseId, queryKey: getListMessagesQueryKey(thread.courseId) } });
   const sendMutation = useSendMessage();
@@ -156,7 +156,10 @@ function ChatThread({ thread }: { thread: { courseId: number, otherUserId: strin
   return (
     <>
       {/* Chat Header */}
-      <div className="h-16 border-b flex items-center px-6 bg-card shrink-0">
+      <div className="h-16 border-b flex items-center px-4 md:px-6 bg-card shrink-0">
+        <Button variant="ghost" size="icon" className="md:hidden mr-1 -ml-2 shrink-0" onClick={onBack} title="Back to inbox">
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
         <Avatar className="w-8 h-8 mr-3">
           <AvatarFallback>{thread.name.charAt(0)}</AvatarFallback>
         </Avatar>

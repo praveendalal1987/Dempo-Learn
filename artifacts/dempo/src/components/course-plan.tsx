@@ -272,7 +272,7 @@ function TeacherPlanEditor({ courseId, plan }: { courseId: number; plan: any }) 
                       />
                     </div>
                     {(draft?.title || "").trim() && (
-                      <div className="pl-[76px] grid gap-3">
+                      <div className="pl-0 md:pl-[76px] grid gap-3">
                         <Textarea rows={2} placeholder="What will be covered (visible to students)..." value={draft?.description || ""} onChange={e => setField(hour, 'description', e.target.value)} />
                         <div className="grid md:grid-cols-3 gap-3">
                           <div className="space-y-1">
