@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Container, Eyebrow } from "@/components/ui";
+import { routes } from "@/lib/routes";
 import {
   PRACTICE_FILTERS,
   PRACTICE_PROJECTS,
   PRACTICE_TOTAL,
   practiceLevelColor,
-} from "@/lib/content";
+} from "@/lib/practice";
 
 export function PracticeClient() {
   const [filter, setFilter] = useState<string>("All");
@@ -68,8 +70,10 @@ export function PracticeClient() {
       <Container max="detail" style={{ padding: "24px 28px 12px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
           {shown.map((p) => (
-            <div
+            <Link
               key={p.id}
+              href={routes.practiceProject(p.id)}
+              className="plain"
               style={{
                 background: "var(--card)",
                 border: "1px solid var(--border)",
@@ -78,6 +82,7 @@ export function PracticeClient() {
                 display: "flex",
                 flexDirection: "column",
                 gap: 12,
+                color: "var(--ink)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -92,8 +97,8 @@ export function PracticeClient() {
                 {p.title}
               </div>
               <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 13.5, flex: 1 }}>{p.blurb}</p>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)" }}>Build &amp; submit →</span>
-            </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)" }}>View problem &amp; build →</span>
+            </Link>
           ))}
         </div>
         <div className="mono" style={{ marginTop: 20, fontSize: 10, letterSpacing: "0.12em", color: "var(--text-secondary)", textAlign: "center" }}>

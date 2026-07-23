@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicProfile } from "@/lib/portfolio";
+import { getUserBySlug, listPublishedProjects, displayName } from "@/lib/data";
+import { formatDate } from "@/lib/format";
 import { routes } from "@/lib/routes";
 
 export async function generateMetadata({
@@ -10,11 +11,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const profile = getPublicProfile(slug);
-  if (!profile) return { title: "Portfolio not found" };
+  const user = await getUserBySlug(slug);
+  if (!user) return { title: "Portfolio not found" };
+  const name = displayName(user);
   return {
-    title: `${profile.name} — reviewed portfolio`,
-    description: `${profile.name}: ${profile.line}. Every project personally reviewed and approved by Praveen Dalal.`,
+    title: `${name} — AI project portfolio`,
+    description: `${name} builds real things with AI. A portfolio of shipped projects, from problem to working build.`,
   };
 }
 
@@ -24,133 +26,109 @@ export default async function RecruiterView({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const profile = getPublicProfile(slug);
-  if (!profile) notFound();
+  const user = await getUserBySlug(slug);
+  if (!user) notFound();
 
-  const initials = profile.name
-    .split(" ")
+  const projects = await listPublishedProjects(user.id);
+  const name = displayName(user);
+  const initials = name
+    .split(/[\s.@]+/)
+    .filter(Boolean)
     .map((w) => w[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
 
+  // Skill chips = the tools they've actually used across published builds.
+  const skills = Array.from(new Set(projects.flatMap((p) => p.techStack))).slice(0, 10);
+
   return (
     <>
-      {/* Navy top bar */}
       <div style={{ background: "var(--ink)", color: "#fff" }}>
-        <div
-          className="mono"
-          style={{
-            maxWidth: "var(--w-detail)",
-            margin: "0 auto",
-            padding: "14px 28px",
-            fontSize: 10,
-            letterSpacing: "0.16em",
-            color: "var(--accent-on-navy)",
-          }}
-        >
-          REVIEWED PORTFOLIO · AIPRAVEEN.COM
+        <div className="mono" style={{ maxWidth: "var(--w-detail)", margin: "0 auto", padding: "14px 28px", fontSize: 10, letterSpacing: "0.16em", color: "var(--accent-on-navy)" }}>
+          AI PROJECT PORTFOLIO · AIPRAVEEN.COM
         </div>
       </div>
 
       {/* Profile */}
       <div style={{ maxWidth: "var(--w-detail)", margin: "0 auto", padding: "48px 28px 24px" }}>
         <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
-          <div
-            className="display"
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              background: "var(--ink)",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 22,
-              fontWeight: 650,
-              flexShrink: 0,
-            }}
-          >
+          <div className="display" style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--ink)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 650, flexShrink: 0 }}>
             {initials}
           </div>
           <div style={{ flex: 1, minWidth: 240 }}>
             <h1 className="display" style={{ fontWeight: 650, fontSize: 30, margin: "0 0 4px" }}>
-              {profile.name}
+              {name}
             </h1>
-            <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>{profile.line}</div>
+            <div style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+              Builds real things with AI · {projects.length} shipped {projects.length === 1 ? "project" : "projects"}
+            </div>
           </div>
-          <a
-            href="mailto:hello@aipraveen.com"
-            className="plain"
-            style={{ background: "var(--ink)", color: "#fff", borderRadius: "var(--r-card)", padding: "11px 20px", fontSize: 14, fontWeight: 600 }}
-          >
+          <a href={`mailto:${user.email}`} className="plain" style={{ background: "var(--ink)", color: "#fff", borderRadius: "var(--r-card)", padding: "11px 20px", fontSize: 14, fontWeight: 600 }}>
             Contact
           </a>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 18 }}>
-          {profile.skills.map((s) => (
-            <span
-              key={s}
-              className="mono"
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                color: "var(--text-secondary)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--r-chip)",
-                padding: "5px 10px",
-              }}
-            >
-              {s.toUpperCase()}
-            </span>
-          ))}
-        </div>
+        {skills.length > 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 18 }}>
+            {skills.map((s) => (
+              <span key={s} className="mono" style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "var(--r-chip)", padding: "5px 10px" }}>
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Trust banner */}
       <div style={{ maxWidth: "var(--w-detail)", margin: "0 auto", padding: "0 28px 24px" }}>
-        <div
-          style={{
-            background: "var(--accent-tint)",
-            border: "1px solid var(--accent-border)",
-            borderRadius: "var(--r-card)",
-            padding: "14px 20px",
-            fontSize: 13.5,
-            color: "var(--ink)",
-          }}
-        >
-          Every published project below was personally reviewed and approved by Praveen Dalal.
+        <div style={{ background: "var(--accent-tint)", border: "1px solid var(--accent-border)", borderRadius: "var(--r-card)", padding: "14px 20px", fontSize: 13.5, color: "var(--ink)" }}>
+          Every project below was built against a real industry brief from the AIPD practice library.
         </div>
       </div>
 
       {/* Projects */}
       <div style={{ maxWidth: "var(--w-detail)", margin: "0 auto", padding: "0 28px 40px", display: "flex", flexDirection: "column", gap: 22 }}>
-        {profile.published.map((p) => (
-          <div key={p.title} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: "28px 32px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 16 }}>
-              <h2 className="display" style={{ fontWeight: 650, fontSize: 20, margin: 0 }}>
-                {p.title}
-              </h2>
-              <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--accent)", whiteSpace: "nowrap" }}>
-                {p.tag}
-              </span>
+        {projects.length === 0 ? (
+          <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>No published projects yet.</p>
+        ) : (
+          projects.map((p) => (
+            <div key={p.id} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: "28px 32px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 12, flexWrap: "wrap" }}>
+                <h2 className="display" style={{ fontWeight: 650, fontSize: 20, margin: 0 }}>
+                  {p.title}
+                </h2>
+                <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--accent)", whiteSpace: "nowrap" }}>
+                  {p.briefId} · {p.briefTitle}
+                </span>
+              </div>
+              <p style={{ margin: "0 0 12px", fontSize: 14.5, lineHeight: 1.6 }}>{p.description}</p>
+              {p.audience && (
+                <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12 }}>
+                  <strong style={{ color: "var(--ink)" }}>Built for:</strong> {p.audience}
+                </div>
+              )}
+              {p.techStack.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+                  {p.techStack.map((t) => (
+                    <span key={t} className="mono" style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--ink)", border: "1px solid var(--border)", borderRadius: "var(--r-chip)", padding: "4px 8px" }}>
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                {p.links.map((l) => (
+                  <a key={l.url} href={l.url} target="_blank" rel="noreferrer" style={{ fontSize: 13, fontWeight: 600 }}>
+                    {l.label} ↗
+                  </a>
+                ))}
+                <span className="mono" style={{ marginLeft: "auto", fontSize: 9.5, letterSpacing: "0.12em", color: "var(--text-secondary)" }}>
+                  SHIPPED {formatDate(p.createdAt).toUpperCase()}
+                </span>
+              </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, marginBottom: 16 }}>
-              <Col label="PROBLEM" text={p.problem} />
-              <Col label="BUILT" text={p.built} />
-              <Col label="OUTCOME" text={p.outcome} />
-            </div>
-            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, display: "flex", justifyContent: "space-between" }}>
-              <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--success)" }}>
-                REVIEWED BY PRAVEEN DALAL ✓
-              </span>
-              <span className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--text-secondary)" }}>
-                {p.date}
-              </span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Hiring CTA */}
@@ -165,16 +143,5 @@ export default async function RecruiterView({
         </div>
       </div>
     </>
-  );
-}
-
-function Col({ label, text }: { label: string; text: string }) {
-  return (
-    <div>
-      <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.14em", color: "var(--text-secondary)", marginBottom: 8 }}>
-        {label}
-      </div>
-      <p style={{ margin: 0, fontSize: 13.5 }}>{text}</p>
-    </div>
   );
 }

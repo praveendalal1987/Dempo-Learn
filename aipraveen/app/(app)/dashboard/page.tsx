@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container, Chip } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
-import { listEntitlements, courseProgress, type EntitlementView } from "@/lib/data";
+import { listEntitlements, courseProgress, displayName, type EntitlementView } from "@/lib/data";
 import { renewLabelFor } from "@/lib/catalog";
 import { FLAT_LESSONS } from "@/lib/course";
 import { formatDate, daysUntil } from "@/lib/format";
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const continueItem = withProgress.find(
     (x) => x.ent.product.kind === "course" && x.ent.status !== "expired" && x.progress && x.progress.percent < 100,
   );
-  const firstName = user.name?.split(" ")[0] ?? "there";
+  const firstName = displayName(user).split(" ")[0];
 
   return (
     <Container max="wide" style={{ padding: "40px 28px 80px" }}>

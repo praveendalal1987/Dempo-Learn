@@ -5,6 +5,8 @@ export const routes = {
   product: (slug: string) => `/store/${slug}`,
   competitions: "/competitions",
   practice: "/practice",
+  practiceProject: (id: string) => `/practice/${id}`,
+  practiceSubmit: (id: string) => `/practice/${id}/submit`,
   workshops: "/workshops",
   companies: "/companies",
   book: "/book",

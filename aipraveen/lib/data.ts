@@ -15,6 +15,48 @@ export interface AppUser {
   email: string;
   name: string | null;
   isAdmin: boolean;
+  /** Public portfolio slug, e.g. "asha-menon". */
+  slug: string;
+}
+
+export interface ProjectLink {
+  label: string;
+  url: string;
+}
+
+export type ProjectStatus = "in_review" | "published";
+
+/** A build a learner submitted against a practice brief — their portfolio work. */
+export interface UserProject {
+  id: string;
+  userId: string;
+  briefId: string;
+  briefTitle: string;
+  title: string;
+  description: string;
+  audience: string;
+  techStack: string[];
+  links: ProjectLink[];
+  status: ProjectStatus;
+  createdAt: Date;
+}
+
+/** A readable display name: the set name, else a title-cased email local part. */
+export function displayName(user: { name: string | null; email: string }): string {
+  if (user.name) return user.name;
+  const local = user.email.split("@")[0].replace(/[._-]+/g, " ").trim();
+  return local.replace(/\b\w/g, (c) => c.toUpperCase()) || "Learner";
+}
+
+export function slugify(input: string): string {
+  return (
+    input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "learner"
+  );
 }
 
 export interface AppEntitlement {
@@ -61,6 +103,7 @@ interface Store {
   orders: AppOrder[];
   /** key: `${userId}:${productId}` -> Set of completed lesson keys */
   progress: Map<string, Set<string>>;
+  projects: UserProject[];
   orderSeq: number;
 }
 
@@ -81,6 +124,7 @@ function seed(): Store {
     entitlements: [],
     orders: [],
     progress: new Map(),
+    projects: [],
     orderSeq: 2142,
   };
 
@@ -89,12 +133,14 @@ function seed(): Store {
     email: "asha.menon@gmail.com",
     name: "Asha Menon",
     isAdmin: false,
+    slug: "asha-menon",
   };
   const owner: AppUser = {
     id: "u_praveen",
     email: "praveen@aipraveen.com",
     name: "Praveen Dalal",
     isAdmin: true,
+    slug: "praveen-dalal",
   };
   store.users.set(asha.id, asha);
   store.users.set(owner.id, owner);
@@ -135,6 +181,55 @@ function seed(): Store {
     new Set(flatKeys.slice(0, 6)),
   );
 
+  // Seed Asha's portfolio: two published builds + one in review.
+  store.projects.push(
+    {
+      id: uid(),
+      userId: asha.id,
+      briefId: "PR-003",
+      briefTitle: "Review-to-insight digest",
+      title: "ReviewLens — weekly insight digest",
+      description:
+        "Ingests a week of marketplace reviews and produces a one-page digest: the top three themes, the sentiment trend, and the single most urgent issue, each with a quoted example.",
+      audience: "Founders and marketing leads at small D2C brands.",
+      techStack: ["Next.js", "GPT-4o mini", "Google Sheets", "Vercel"],
+      links: [
+        { label: "Live demo", url: "https://example.com/reviewlens" },
+        { label: "How it works", url: "https://example.com/reviewlens/notes" },
+      ],
+      status: "published",
+      createdAt: new Date(now - 20 * DAY_MS),
+    },
+    {
+      id: uid(),
+      userId: asha.id,
+      briefId: "PR-022",
+      briefTitle: "WhatsApp order-taker for a tiffin service",
+      title: "TiffinDesk — WhatsApp order-taker",
+      description:
+        "Reads a day of free-text WhatsApp orders, matches them to the menu, and prints a kitchen-ready list plus anything that needs confirming.",
+      audience: "Home kitchens and small tiffin services.",
+      techStack: ["Python", "Claude", "Streamlit"],
+      links: [{ label: "Live demo", url: "https://example.com/tiffindesk" }],
+      status: "published",
+      createdAt: new Date(now - 8 * DAY_MS),
+    },
+    {
+      id: uid(),
+      userId: asha.id,
+      briefId: "PR-031",
+      briefTitle: "Resume screener that explains itself",
+      title: "FairScreen — explainable resume screening",
+      description:
+        "Scores resumes against an explicit rubric and writes one honest paragraph for every reject — no silent scores.",
+      audience: "Campus placement cells and small hiring teams.",
+      techStack: ["Next.js", "OpenAI API"],
+      links: [],
+      status: "in_review",
+      createdAt: new Date(now - 3 * DAY_MS),
+    },
+  );
+
   return store;
 }
 
@@ -169,14 +264,30 @@ export async function getUser(id: string): Promise<AppUser | null> {
 export async function upsertUserByEmail(email: string): Promise<AppUser> {
   const existing = await findUserByEmail(email);
   if (existing) return existing;
+  const clean = email.trim().toLowerCase();
   const user: AppUser = {
     id: uid(),
-    email: email.trim().toLowerCase(),
+    email: clean,
     name: null,
     isAdmin: false,
+    slug: uniqueSlug(slugify(clean.split("@")[0])),
   };
   db.users.set(user.id, user);
   return user;
+}
+
+function uniqueSlug(base: string): string {
+  let slug = base;
+  let n = 2;
+  const taken = (s: string) =>
+    [...db.users.values()].some((u) => u.slug === s);
+  while (taken(slug)) slug = `${base}-${n++}`;
+  return slug;
+}
+
+export async function getUserBySlug(slug: string): Promise<AppUser | null> {
+  for (const u of db.users.values()) if (u.slug === slug) return u;
+  return null;
 }
 
 // ---------- magic links ----------
@@ -407,6 +518,52 @@ export async function setLessonCompleted(
   if (completed) set.add(lessonKey);
   else set.delete(lessonKey);
   db.progress.set(key, set);
+}
+
+// ---------- portfolio projects ----------
+export interface SubmitProjectInput {
+  briefId: string;
+  briefTitle: string;
+  title: string;
+  description: string;
+  audience: string;
+  techStack: string[];
+  links: ProjectLink[];
+}
+
+/** All of a user's projects, newest first (owner view). */
+export async function listUserProjects(userId: string): Promise<UserProject[]> {
+  return db.projects
+    .filter((p) => p.userId === userId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+/** Only published projects (public recruiter/portfolio view). */
+export async function listPublishedProjects(userId: string): Promise<UserProject[]> {
+  return (await listUserProjects(userId)).filter((p) => p.status === "published");
+}
+
+/** Create a portfolio project from a submission. */
+export async function addUserProject(
+  userId: string,
+  input: SubmitProjectInput,
+): Promise<UserProject> {
+  const project: UserProject = {
+    id: uid(),
+    userId,
+    briefId: input.briefId,
+    briefTitle: input.briefTitle,
+    title: input.title,
+    description: input.description,
+    audience: input.audience,
+    techStack: input.techStack,
+    links: input.links,
+    // Self-published so it appears on the shareable page immediately.
+    status: "published",
+    createdAt: new Date(),
+  };
+  db.projects.push(project);
+  return project;
 }
 
 export { renewLabelFor };
