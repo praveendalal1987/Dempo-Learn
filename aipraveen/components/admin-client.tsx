@@ -11,7 +11,6 @@ import {
   ADMIN_PRODUCTS,
   ADMIN_ORDERS,
   ACCESS_ROWS,
-  SUBMISSIONS,
   TESTIMONIAL_QUEUE,
   INDUSTRY_PIPELINE,
   type OrderChip,
@@ -19,8 +18,23 @@ import {
 } from "@/lib/admin";
 import { routes } from "@/lib/routes";
 import { Logo } from "@/components/logo";
+import { sendFeedback } from "@/app/admin/actions";
 
-export function AdminClient() {
+export interface AdminSubmission {
+  id: string;
+  title: string;
+  briefId: string;
+  briefTitle: string;
+  description: string;
+  userName: string;
+  userEmail: string;
+  techStack: string[];
+  links: { label: string; url: string }[];
+  feedback: string | null;
+  reviewed: boolean;
+}
+
+export function AdminClient({ submissions }: { submissions: AdminSubmission[] }) {
   const [tab, setTab] = useState<AdminTab>("Dashboard");
 
   return (
@@ -69,7 +83,7 @@ export function AdminClient() {
         {tab === "Products" && <Products />}
         {tab === "Orders" && <Orders />}
         {tab === "Access" && <Access />}
-        {tab === "Submissions" && <Submissions />}
+        {tab === "Submissions" && <Submissions submissions={submissions} />}
         {tab === "Testimonials" && <Testimonials />}
         {tab === "Industry" && <Industry />}
       </div>
@@ -224,25 +238,88 @@ function Access() {
   );
 }
 
-function Submissions() {
+function Submissions({ submissions }: { submissions: AdminSubmission[] }) {
+  if (submissions.length === 0) {
+    return <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>No submissions yet.</p>;
+  }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {SUBMISSIONS.map((s) => (
-        <div key={s.project} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-            <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--accent)" }}>{s.brief}</div>
-            <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.1em", color: "var(--text-secondary)" }}>{s.when}</div>
-          </div>
-          <div className="display" style={{ fontWeight: 650, fontSize: 17, marginBottom: 4 }}>{s.project}</div>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>{s.who}</div>
-          <div style={{ fontSize: 13, marginBottom: 16 }}>{s.note}</div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <PrimaryBtn>Approve &amp; publish</PrimaryBtn>
-            <SmallBtn>Send feedback</SmallBtn>
-            <SmallBtn>Open project</SmallBtn>
-          </div>
-        </div>
+      {submissions.map((s) => (
+        <SubmissionCard key={s.id} sub={s} />
       ))}
+    </div>
+  );
+}
+
+function SubmissionCard({ sub }: { sub: AdminSubmission }) {
+  const [text, setText] = useState(sub.feedback ?? "");
+  const [reviewed, setReviewed] = useState(sub.reviewed);
+  const [busy, setBusy] = useState(false);
+  const [justSent, setJustSent] = useState(false);
+
+  async function send() {
+    setBusy(true);
+    const res = await sendFeedback(sub.id, text);
+    setBusy(false);
+    if (res.ok) {
+      setReviewed(true);
+      setJustSent(true);
+      setTimeout(() => setJustSent(false), 2500);
+    }
+  }
+
+  return (
+    <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+        <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--accent)" }}>
+          {sub.briefId} · {sub.briefTitle}
+        </div>
+        <Pill
+          c={reviewed ? "var(--accent)" : "var(--text-secondary)"}
+          b={reviewed ? "var(--accent-border)" : "var(--border)"}
+          bg={reviewed ? "var(--accent-tint)" : "var(--muted-fill)"}
+        >
+          {reviewed ? "REVIEWED" : "AWAITING REVIEW"}
+        </Pill>
+      </div>
+      <div className="display" style={{ fontWeight: 650, fontSize: 17, marginBottom: 4 }}>{sub.title}</div>
+      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
+        {sub.userName} · {sub.userEmail}
+      </div>
+      <p style={{ fontSize: 13.5, margin: "0 0 10px" }}>{sub.description}</p>
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14 }}>
+        {sub.links.map((l) => (
+          <a key={l.url} href={l.url} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, fontWeight: 600 }}>
+            {l.label} ↗
+          </a>
+        ))}
+      </div>
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+        <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--text-secondary)", marginBottom: 8 }}>
+          FEEDBACK TO THE STUDENT
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={3}
+          placeholder="What's strong, and the one change that would make this recruiter-ready…"
+          style={{ width: "100%", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: "10px 12px", fontSize: 13.5, resize: "vertical", outlineColor: "var(--ink)" }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 10 }}>
+          <button
+            onClick={send}
+            disabled={busy || !text.trim()}
+            style={{ background: "var(--ink)", color: "#fff", border: "none", borderRadius: "var(--r-card)", padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: busy || !text.trim() ? "not-allowed" : "pointer", opacity: busy || !text.trim() ? 0.5 : 1 }}
+          >
+            {busy ? "Sending…" : reviewed ? "Update feedback" : "Send feedback"}
+          </button>
+          {justSent && (
+            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--success)" }}>
+              ✓ SENT — STUDENT CAN SEE IT
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Container, Chip } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
 import { listUserProjects } from "@/lib/data";
-import { projectStatusChip } from "@/lib/portfolio";
+import { portfolioChip } from "@/lib/portfolio";
 import { formatDate } from "@/lib/format";
 import { routes } from "@/lib/routes";
 import { CopyLink } from "@/components/copy-link";
@@ -49,7 +49,7 @@ export default async function PortfolioPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {projects.map((p) => {
-            const chip = projectStatusChip(p.status);
+            const chip = portfolioChip(!!p.feedback);
             return (
               <div key={p.id} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--r-card)", padding: "22px 24px" }}>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -76,6 +76,23 @@ export default async function PortfolioPage() {
                         {t}
                       </span>
                     ))}
+                  </div>
+                )}
+                {p.feedback && (
+                  <div style={{ background: "var(--accent-tint)", border: "1px solid var(--accent-border)", borderRadius: "var(--r-card)", padding: "14px 18px", marginBottom: 12 }}>
+                    <div className="mono" style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--accent)", marginBottom: 6 }}>
+                      FEEDBACK FROM PRAVEEN
+                    </div>
+                    <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: "var(--ink)" }}>{p.feedback}</p>
+                    <div style={{ marginTop: 10 }}>
+                      <Link
+                        href={routes.practiceSubmit(p.briefId)}
+                        className="plain"
+                        style={{ fontSize: 12.5, fontWeight: 600, color: "var(--accent)" }}
+                      >
+                        Improve &amp; resubmit →
+                      </Link>
+                    </div>
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>

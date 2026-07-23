@@ -1,24 +1,27 @@
 /** Presentation helpers for portfolio projects. Data lives in lib/data.ts. */
-import type { ProjectStatus } from "./data";
 
-export function projectStatusChip(status: ProjectStatus): {
+/**
+ * Owner-view chip. Self-published projects show PUBLISHED (green) until Praveen
+ * leaves feedback, then FEEDBACK RECEIVED (bronze) so the student acts on it.
+ */
+export function portfolioChip(hasFeedback: boolean): {
   label: string;
   color: string;
   border: string;
   bg: string;
 } {
-  if (status === "published") {
+  if (hasFeedback) {
     return {
-      label: "PUBLISHED",
-      color: "var(--success)",
-      border: "var(--success-border)",
-      bg: "var(--success-bg)",
+      label: "FEEDBACK RECEIVED",
+      color: "var(--accent)",
+      border: "var(--accent-border)",
+      bg: "var(--accent-tint)",
     };
   }
   return {
-    label: "IN REVIEW",
-    color: "var(--text-secondary)",
-    border: "var(--border)",
-    bg: "var(--muted-fill)",
+    label: "PUBLISHED",
+    color: "var(--success)",
+    border: "var(--success-border)",
+    bg: "var(--success-bg)",
   };
 }

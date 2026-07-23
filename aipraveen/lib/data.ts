@@ -38,6 +38,9 @@ export interface UserProject {
   techStack: string[];
   links: ProjectLink[];
   status: ProjectStatus;
+  /** Feedback from Praveen after review; null until reviewed. */
+  feedback: string | null;
+  reviewedAt: Date | null;
   createdAt: Date;
 }
 
@@ -198,6 +201,9 @@ function seed(): Store {
         { label: "How it works", url: "https://example.com/reviewlens/notes" },
       ],
       status: "published",
+      feedback:
+        "Strong build. The theme clustering is genuinely useful. One improvement: quote the review verbatim next to each theme so a manager can trust the summary — right now it paraphrases. Do that and I'd happily show this to a recruiter.",
+      reviewedAt: new Date(now - 16 * DAY_MS),
       createdAt: new Date(now - 20 * DAY_MS),
     },
     {
@@ -212,6 +218,8 @@ function seed(): Store {
       techStack: ["Python", "Claude", "Streamlit"],
       links: [{ label: "Live demo", url: "https://example.com/tiffindesk" }],
       status: "published",
+      feedback: null,
+      reviewedAt: null,
       createdAt: new Date(now - 8 * DAY_MS),
     },
     {
@@ -225,7 +233,9 @@ function seed(): Store {
       audience: "Campus placement cells and small hiring teams.",
       techStack: ["Next.js", "OpenAI API"],
       links: [],
-      status: "in_review",
+      status: "published",
+      feedback: null,
+      reviewedAt: null,
       createdAt: new Date(now - 3 * DAY_MS),
     },
   );
@@ -560,10 +570,49 @@ export async function addUserProject(
     links: input.links,
     // Self-published so it appears on the shareable page immediately.
     status: "published",
+    feedback: null,
+    reviewedAt: null,
     createdAt: new Date(),
   };
   db.projects.push(project);
   return project;
+}
+
+export interface AdminProjectView extends UserProject {
+  userEmail: string;
+  userName: string;
+}
+
+/** All submitted projects with author info, unreviewed first (admin queue). */
+export async function listAllProjectsForAdmin(): Promise<AdminProjectView[]> {
+  return db.projects
+    .map((p) => {
+      const u = db.users.get(p.userId);
+      return {
+        ...p,
+        userEmail: u?.email ?? "unknown",
+        userName: u ? displayName(u) : "Unknown",
+      };
+    })
+    .sort((a, b) => {
+      // Unreviewed first, then newest.
+      const ar = a.reviewedAt ? 1 : 0;
+      const br = b.reviewedAt ? 1 : 0;
+      if (ar !== br) return ar - br;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+}
+
+/** Praveen's review: attach feedback the student can act on. */
+export async function setProjectFeedback(
+  projectId: string,
+  feedback: string,
+): Promise<{ ok: boolean }> {
+  const p = db.projects.find((x) => x.id === projectId);
+  if (!p) return { ok: false };
+  p.feedback = feedback.trim() || null;
+  p.reviewedAt = p.feedback ? new Date() : null;
+  return { ok: true };
 }
 
 export { renewLabelFor };
