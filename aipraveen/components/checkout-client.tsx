@@ -7,6 +7,7 @@ import { Container } from "@/components/ui";
 import { fieldStyle, primaryButtonStyle } from "@/components/form";
 import { formatINR } from "@/lib/format";
 import { routes } from "@/lib/routes";
+import { ConsentCheckbox } from "@/components/consent-checkbox";
 import type { LineItem } from "@/lib/checkout";
 import { completeCheckout } from "@/app/(site)/checkout/actions";
 
@@ -59,6 +60,7 @@ export function CheckoutClient({
   const [email, setEmail] = useState(prefillEmail);
   const [coupon, setCoupon] = useState("");
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const failedUrl = `/checkout/failed?${new URLSearchParams(
@@ -207,9 +209,15 @@ export function CheckoutClient({
           />
         )}
 
+        <ConsentCheckbox checked={agreed} onChange={setAgreed} includeRefund={!line.isFree} />
+
         {error && <div style={{ color: "var(--error)", fontSize: 13 }}>{error}</div>}
 
-        <button type="submit" disabled={busy} style={{ ...primaryButtonStyle, opacity: busy ? 0.6 : 1 }}>
+        <button
+          type="submit"
+          disabled={busy || !agreed}
+          style={{ ...primaryButtonStyle, opacity: busy || !agreed ? 0.5 : 1, cursor: busy || !agreed ? "not-allowed" : "pointer" }}
+        >
           {busy ? "Processing…" : payLabel}
         </button>
       </form>

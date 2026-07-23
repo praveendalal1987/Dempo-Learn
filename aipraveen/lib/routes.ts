@@ -29,6 +29,7 @@ export const routes = {
   terms: "/legal/terms",
   privacy: "/legal/privacy",
   refund: "/legal/refund",
+  cookies: "/legal/cookies",
 } as const;
 
 /** Primary marketing nav (order matters). */

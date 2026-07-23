@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Container } from "@/components/ui";
 import { fieldStyle, primaryButtonStyle } from "@/components/form";
+import { ConsentCheckbox } from "@/components/consent-checkbox";
 
 export function LoginClient() {
   const params = useSearchParams();
@@ -11,6 +12,7 @@ export function LoginClient() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function send() {
@@ -87,8 +89,13 @@ export function LoginClient() {
                 onChange={(e) => setEmail(e.target.value)}
                 style={fieldStyle}
               />
+              <ConsentCheckbox checked={agreed} onChange={setAgreed} />
               {error && <div style={{ color: "var(--error)", fontSize: 13 }}>{error}</div>}
-              <button type="submit" disabled={busy} style={{ ...primaryButtonStyle, opacity: busy ? 0.6 : 1 }}>
+              <button
+                type="submit"
+                disabled={busy || !agreed}
+                style={{ ...primaryButtonStyle, opacity: busy || !agreed ? 0.5 : 1, cursor: busy || !agreed ? "not-allowed" : "pointer" }}
+              >
                 {busy ? "Sending…" : "Send login link"}
               </button>
             </form>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { CookieConsent } from "@/components/cookie-consent";
 
 const archivo = Archivo({
   variable: "--font-display",
@@ -41,7 +42,10 @@ export default function RootLayout({
       lang="en"
       className={`${archivo.variable} ${inter.variable} ${plexMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieConsent />
+      </body>
     </html>
   );
 }

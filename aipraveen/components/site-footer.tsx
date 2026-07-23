@@ -134,6 +134,9 @@ export function SiteFooter() {
             <Link href={routes.refund} style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
               REFUNDS
             </Link>
+            <Link href={routes.cookies} style={{ color: "var(--text-secondary)", textDecoration: "none" }}>
+              COOKIES
+            </Link>
           </span>
           <span>UPI · CARDS · NETBANKING</span>
         </div>
