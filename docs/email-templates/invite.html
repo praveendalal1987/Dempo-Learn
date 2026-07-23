@@ -1,0 +1,80 @@
+<!--
+  Dempo Learn — invite email template for MSG91.
+  Paste this HTML into an MSG91 email template. MSG91 fills the ##placeholders##
+  from variables the app sends (see artifacts/api-server/src/lib/email.ts:
+  sendInviteEmail): name, inviter, role, invite_url, app_url.
+  Set the template's id as MSG91_INVITE_TEMPLATE_ID (see docs/email-setup.md).
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>You're invited to Dempo Learn</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f7; font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#1f2937;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7; padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 24px rgba(0,0,0,0.06);">
+
+            <!-- Header -->
+            <tr>
+              <td style="background-color:#7c3aed; background-image:linear-gradient(135deg,#7c3aed 0%,#d946ef 55%,#fb923c 100%); padding:36px 32px;">
+                <div style="font-size:24px; font-weight:700; color:#ffffff; letter-spacing:-0.02em;">Dempo Learn</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.9); margin-top:4px;">Learning hits Different.</div>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:36px 32px 8px 32px;">
+                <h1 style="margin:0 0 16px 0; font-size:22px; font-weight:700; color:#111827;">Hi ##name##, you're in! 🎉</h1>
+                <p style="margin:0 0 16px 0; font-size:16px; line-height:1.6; color:#374151;">
+                  <strong>##inviter##</strong> has invited you to join <strong>Dempo Learn</strong> as a <strong>##role##</strong>.
+                </p>
+                <p style="margin:0 0 28px 0; font-size:16px; line-height:1.6; color:#374151;">
+                  It's where your courses, assignments, quizzes, grades, and daily learning journal all live in one place. Set up your account and jump in.
+                </p>
+
+                <!-- CTA button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px 0;">
+                  <tr>
+                    <td align="center" bgcolor="#7c3aed" style="border-radius:9999px;">
+                      <a href="##invite_url##" target="_blank"
+                        style="display:inline-block; padding:14px 32px; font-size:16px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:9999px;">
+                        Accept your invite &rarr;
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 8px 0; font-size:13px; line-height:1.6; color:#6b7280;">
+                  If the button doesn't work, copy and paste this link into your browser:
+                </p>
+                <p style="margin:0 0 24px 0; font-size:13px; line-height:1.6; word-break:break-all;">
+                  <a href="##invite_url##" style="color:#7c3aed;">##invite_url##</a>
+                </p>
+
+                <p style="margin:0; font-size:13px; line-height:1.6; color:#9ca3af;">
+                  Sign in with this email address — access is by invitation only.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:24px 32px 32px 32px; border-top:1px solid #f0f0f4;">
+                <p style="margin:0; font-size:12px; line-height:1.6; color:#9ca3af;">
+                  You received this because ##inviter## added you to Dempo Learn. If you weren't expecting this, you can ignore this email.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+          <div style="max-width:520px; margin:16px auto 0; font-size:11px; color:#b0b3bd; text-align:center;">Dempo Learn</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
