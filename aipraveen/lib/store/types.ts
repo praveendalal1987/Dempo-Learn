@@ -54,7 +54,15 @@ export interface AppOrder {
   description: string;
   amount: number;
   status: OrderStatus;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
   createdAt: Date;
+}
+
+/** Razorpay identifiers to persist on an order (for reconciliation/refunds). */
+export interface OrderMeta {
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
 }
 
 export interface EntitlementView extends AppEntitlement {
@@ -111,16 +119,32 @@ export interface DataStore {
   getEntitlement(userId: string, productId: string): Promise<EntitlementView | null>;
   hasActivePaidCourse(userId: string): Promise<boolean>;
 
-  recordPurchase(userId: string, email: string, product: Product): Promise<PurchaseResult>;
-  recordRenewal(userId: string, email: string, product: Product): Promise<PurchaseResult>;
+  recordPurchase(
+    userId: string,
+    email: string,
+    product: Product,
+    meta?: OrderMeta,
+  ): Promise<PurchaseResult>;
+  recordRenewal(
+    userId: string,
+    email: string,
+    product: Product,
+    meta?: OrderMeta,
+  ): Promise<PurchaseResult>;
   recordCompetitionOrder(
     userId: string,
     email: string,
     competitionId: string,
     name: string,
     fee: number,
+    meta?: OrderMeta,
   ): Promise<AppOrder>;
   listOrders(userId: string): Promise<AppOrder[]>;
+
+  /** Idempotency gate: true the first time a Razorpay payment id is seen. */
+  claimPayment(razorpayPaymentId: string): Promise<boolean>;
+  /** Refund: mark the order refunded and revoke the granted entitlement. */
+  revokeByPayment(razorpayPaymentId: string): Promise<{ ok: boolean }>;
 
   getCompletedLessons(userId: string, productId: string): Promise<Set<string>>;
   courseProgress(userId: string, productId: string): Promise<CourseProgress>;

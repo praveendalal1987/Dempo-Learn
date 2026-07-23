@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyRazorpaySignature } from "@/lib/payments";
-import { fulfillOrder } from "@/lib/fulfill";
+import { fulfillOrder, signInByEmail, checkoutSuccessPath } from "@/lib/fulfill";
+import { claimPayment } from "@/lib/data";
 
 /**
  * Called from the Razorpay success handler. Verifies the payment signature
@@ -37,13 +38,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payment verification failed" }, { status: 400 });
   }
 
-  const result = await fulfillOrder({
+  const line = {
     email: body.email ?? "",
     product: body.product,
     renew: body.renew,
     competition: body.competition,
-  });
+  };
 
-  const status = result.ok ? 200 : 400;
-  return NextResponse.json(result, { status });
+  // Idempotency: whichever of {this callback, the webhook} arrives first grants
+  // access exactly once. If the webhook already did, just sign the buyer in.
+  const fresh = await claimPayment(razorpay_payment_id);
+  if (!fresh) {
+    await signInByEmail(line.email);
+    return NextResponse.json(
+      { ok: true, redirect: checkoutSuccessPath(line) ?? undefined },
+      { status: 200 },
+    );
+  }
+
+  const result = await fulfillOrder({
+    ...line,
+    meta: { razorpayOrderId: razorpay_order_id, razorpayPaymentId: razorpay_payment_id },
+  });
+  return NextResponse.json(result, { status: result.ok ? 200 : 400 });
 }

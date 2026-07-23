@@ -39,6 +39,7 @@ interface Store {
   orders: AppOrder[];
   progress: Map<string, Set<string>>;
   projects: UserProject[];
+  processedPayments: Set<string>;
   orderSeq: number;
 }
 
@@ -55,6 +56,7 @@ function seed(): Store {
     orders: [],
     progress: new Map(),
     projects: [],
+    processedPayments: new Set(),
     orderSeq: 2142,
   };
 
@@ -249,7 +251,7 @@ export const memoryStore: DataStore = {
     );
   },
 
-  async recordPurchase(userId, email, product) {
+  async recordPurchase(userId, email, product, meta) {
     const now = Date.now();
     const order: AppOrder = {
       id: `AP-${db.orderSeq++}`,
@@ -259,6 +261,8 @@ export const memoryStore: DataStore = {
       description: product.title,
       amount: product.price,
       status: product.price === 0 ? "free" : "paid",
+      razorpayOrderId: meta?.razorpayOrderId,
+      razorpayPaymentId: meta?.razorpayPaymentId,
       createdAt: new Date(now),
     };
     db.orders.push(order);
@@ -278,7 +282,7 @@ export const memoryStore: DataStore = {
     }
     return { order, entitlement: ent };
   },
-  async recordRenewal(userId, email, product) {
+  async recordRenewal(userId, email, product, meta) {
     const now = Date.now();
     const ent = db.entitlements.find((e) => e.userId === userId && e.productId === product.id);
     const base = ent ? Math.max(ent.expiresAt.getTime(), now) : now;
@@ -294,12 +298,14 @@ export const memoryStore: DataStore = {
       description: `${product.title} · renewal`,
       amount: renewalPrice(product.price, product.renewPercent),
       status: "renewal",
+      razorpayOrderId: meta?.razorpayOrderId,
+      razorpayPaymentId: meta?.razorpayPaymentId,
       createdAt: new Date(now),
     };
     db.orders.push(order);
     return { order, entitlement: ent ?? null };
   },
-  async recordCompetitionOrder(userId, email, competitionId, name, fee) {
+  async recordCompetitionOrder(userId, email, competitionId, name, fee, meta) {
     const order: AppOrder = {
       id: `AP-${db.orderSeq++}`,
       userId,
@@ -308,10 +314,30 @@ export const memoryStore: DataStore = {
       description: `Competition entry — ${name}`,
       amount: fee,
       status: "paid",
+      razorpayOrderId: meta?.razorpayOrderId,
+      razorpayPaymentId: meta?.razorpayPaymentId,
       createdAt: new Date(),
     };
     db.orders.push(order);
     return order;
+  },
+  async claimPayment(paymentId) {
+    if (db.processedPayments.has(paymentId)) return false;
+    db.processedPayments.add(paymentId);
+    return true;
+  },
+  async revokeByPayment(paymentId) {
+    const order = db.orders.find((o) => o.razorpayPaymentId === paymentId);
+    if (!order) return { ok: false };
+    order.status = "refunded";
+    if (order.userId && order.productId) {
+      const uid2 = order.userId;
+      const pid = order.productId;
+      db.entitlements = db.entitlements.filter(
+        (e) => !(e.userId === uid2 && e.productId === pid),
+      );
+    }
+    return { ok: true };
   },
   async listOrders(userId) {
     return db.orders

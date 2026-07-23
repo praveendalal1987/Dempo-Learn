@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payments not configured" }, { status: 503 });
   }
 
-  let body: { product?: string; renew?: string; competition?: string };
+  let body: { product?: string; renew?: string; competition?: string; email?: string };
   try {
     body = await req.json();
   } catch {
@@ -25,9 +25,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Free items don't need payment" }, { status: 400 });
   }
 
+  // Notes are echoed on the payment webhook so the backstop can fulfil the
+  // exact same line item + buyer even if the browser callback never fires.
+  const notes: Record<string, string> = {};
+  if (body.email) notes.email = body.email.trim().toLowerCase();
+  if (body.product) notes.product = body.product;
+  if (body.renew) notes.renew = body.renew;
+  if (body.competition) notes.competition = body.competition;
+
   try {
     const receipt = `aipd_${line.kind}_${line.refId}_${Date.now()}`.slice(0, 40);
-    const order = await createRazorpayOrder(line.amount, receipt);
+    const order = await createRazorpayOrder(line.amount, receipt, notes);
     return NextResponse.json({
       orderId: order.id,
       amount: order.amount,

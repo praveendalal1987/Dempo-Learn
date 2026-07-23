@@ -82,7 +82,7 @@ export function CheckoutClient({
     const orderRes = await fetch("/api/checkout/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(query),
+      body: JSON.stringify({ ...query, email }),
     });
     if (!orderRes.ok) {
       const d = await orderRes.json().catch(() => ({}));

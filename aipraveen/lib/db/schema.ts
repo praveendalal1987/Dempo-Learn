@@ -109,6 +109,12 @@ export const portfolioProjects = pgTable("portfolio_projects", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/** Idempotency ledger: one row per Razorpay payment we've already fulfilled. */
+export const processedPayments = pgTable("processed_payments", {
+  paymentId: text("payment_id").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type EntitlementRow = typeof entitlements.$inferSelect;

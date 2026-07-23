@@ -6,7 +6,7 @@
 import { isDbConfigured, getDb } from "./db";
 import { memoryStore } from "./store/memory";
 import { makeDbStore } from "./store/db";
-import type { DataStore, SubmitProjectInput } from "./store/types";
+import type { DataStore, SubmitProjectInput, OrderMeta } from "./store/types";
 import type { Product } from "./catalog";
 
 // Re-export all domain types so existing imports (`@/lib/data`) keep working.
@@ -24,6 +24,7 @@ export type {
   PurchaseResult,
   SubmitProjectInput,
   AdminProjectView,
+  OrderMeta,
 } from "./store/types";
 
 export { displayName, slugify, lessonKeysFor } from "./store/helpers";
@@ -55,18 +56,21 @@ export const listEntitlements = (userId: string) => store().listEntitlements(use
 export const getEntitlement = (userId: string, productId: string) =>
   store().getEntitlement(userId, productId);
 export const hasActivePaidCourse = (userId: string) => store().hasActivePaidCourse(userId);
-export const recordPurchase = (userId: string, email: string, product: Product) =>
-  store().recordPurchase(userId, email, product);
-export const recordRenewal = (userId: string, email: string, product: Product) =>
-  store().recordRenewal(userId, email, product);
+export const recordPurchase = (userId: string, email: string, product: Product, meta?: OrderMeta) =>
+  store().recordPurchase(userId, email, product, meta);
+export const recordRenewal = (userId: string, email: string, product: Product, meta?: OrderMeta) =>
+  store().recordRenewal(userId, email, product, meta);
 export const recordCompetitionOrder = (
   userId: string,
   email: string,
   competitionId: string,
   name: string,
   fee: number,
-) => store().recordCompetitionOrder(userId, email, competitionId, name, fee);
+  meta?: OrderMeta,
+) => store().recordCompetitionOrder(userId, email, competitionId, name, fee, meta);
 export const listOrders = (userId: string) => store().listOrders(userId);
+export const claimPayment = (paymentId: string) => store().claimPayment(paymentId);
+export const revokeByPayment = (paymentId: string) => store().revokeByPayment(paymentId);
 
 // ---------- lesson progress ----------
 export const getCompletedLessons = (userId: string, productId: string) =>

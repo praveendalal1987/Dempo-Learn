@@ -15,10 +15,12 @@ export interface RazorpayOrder {
   currency: string;
 }
 
-/** Create a Razorpay order (amount in whole rupees). */
+/** Create a Razorpay order (amount in whole rupees). `notes` are echoed back on
+ * the payment webhook so we can fulfil even if the buyer closes the tab. */
 export async function createRazorpayOrder(
   amountRupees: number,
   receipt: string,
+  notes?: Record<string, string>,
 ): Promise<RazorpayOrder> {
   const auth = Buffer.from(
     `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`,
@@ -34,6 +36,7 @@ export async function createRazorpayOrder(
       amount: amountRupees * 100, // paise
       currency: "INR",
       receipt,
+      notes,
     }),
   });
   if (!res.ok) {

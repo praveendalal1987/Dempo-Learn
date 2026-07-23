@@ -101,6 +101,17 @@ async function main() {
   assert((await store.getEntitlement(user.id, "prompt"))!.renewalCount === 1, "renewalCount incremented");
   assert((await store.listOrders(user.id)).length >= 3, "orders listed newest-first");
 
+  console.log("\nwebhook idempotency + refund");
+  assert((await store.claimPayment("pay_ABC")) === true, "first claim of a payment id succeeds");
+  assert((await store.claimPayment("pay_ABC")) === false, "second claim of same payment id is blocked");
+  // A payment we can later refund.
+  const career = getProduct("student-ai-career-kit")!;
+  await store.recordPurchase(user.id, user.email, career, { razorpayPaymentId: "pay_REF" });
+  assert((await store.getEntitlement(user.id, "career")) !== null, "entitlement exists before refund");
+  assert((await store.revokeByPayment("pay_REF")).ok === true, "revoke by payment id succeeds");
+  assert((await store.getEntitlement(user.id, "career")) === null, "entitlement revoked after refund");
+  assert((await store.revokeByPayment("pay_UNKNOWN")).ok === false, "revoke of unknown payment is a no-op");
+
   console.log(`\nALL ${passed} DB STORE CHECKS PASSED ✅`);
   process.exit(0);
 }

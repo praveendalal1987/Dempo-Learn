@@ -25,8 +25,16 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = PgDatabase<any, typeof schema, any>;
 
-const { users, magicTokens, sessions, orders, entitlements, lessonProgress, portfolioProjects } =
-  schema;
+const {
+  users,
+  magicTokens,
+  sessions,
+  orders,
+  entitlements,
+  lessonProgress,
+  portfolioProjects,
+  processedPayments,
+} = schema;
 
 function uid(): string {
   return crypto.randomUUID();
@@ -51,6 +59,8 @@ function mapOrder(r: schema.OrderRow): AppOrder {
     description: r.description,
     amount: r.amount,
     status: r.status,
+    razorpayOrderId: r.razorpayOrderId ?? undefined,
+    razorpayPaymentId: r.razorpayPaymentId ?? undefined,
     createdAt: r.createdAt,
   };
 }
@@ -204,7 +214,7 @@ export function makeDbStore(db: Db): DataStore {
       );
     },
 
-    async recordPurchase(userId, email, product: Product) {
+    async recordPurchase(userId, email, product: Product, meta) {
       const now = Date.now();
       const order: AppOrder = {
         id: orderId(),
@@ -214,6 +224,8 @@ export function makeDbStore(db: Db): DataStore {
         description: product.title,
         amount: product.price,
         status: product.price === 0 ? "free" : "paid",
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
         createdAt: new Date(now),
       };
       await db.insert(orders).values({
@@ -224,6 +236,8 @@ export function makeDbStore(db: Db): DataStore {
         description: order.description,
         amount: order.amount,
         status: order.status,
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
       });
 
       const existing = await db
@@ -252,7 +266,7 @@ export function makeDbStore(db: Db): DataStore {
       return { order, entitlement: ent };
     },
 
-    async recordRenewal(userId, email, product: Product) {
+    async recordRenewal(userId, email, product: Product, meta) {
       const now = Date.now();
       const existing = await db
         .select()
@@ -277,6 +291,8 @@ export function makeDbStore(db: Db): DataStore {
         description: `${product.title} · renewal`,
         amount: renewalPrice(product.price, product.renewPercent),
         status: "renewal",
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
         createdAt: new Date(now),
       };
       await db.insert(orders).values({
@@ -287,11 +303,13 @@ export function makeDbStore(db: Db): DataStore {
         description: order.description,
         amount: order.amount,
         status: "renewal",
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
       });
       return { order, entitlement: ent };
     },
 
-    async recordCompetitionOrder(userId, email, competitionId, name, fee) {
+    async recordCompetitionOrder(userId, email, competitionId, name, fee, meta) {
       const order: AppOrder = {
         id: orderId(),
         userId,
@@ -300,6 +318,8 @@ export function makeDbStore(db: Db): DataStore {
         description: `Competition entry — ${name}`,
         amount: fee,
         status: "paid",
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
         createdAt: new Date(),
       };
       await db.insert(orders).values({
@@ -310,8 +330,41 @@ export function makeDbStore(db: Db): DataStore {
         description: order.description,
         amount: fee,
         status: "paid",
+        razorpayOrderId: meta?.razorpayOrderId,
+        razorpayPaymentId: meta?.razorpayPaymentId,
       });
       return order;
+    },
+
+    async claimPayment(paymentId) {
+      const rows = await db
+        .insert(processedPayments)
+        .values({ paymentId })
+        .onConflictDoNothing()
+        .returning({ paymentId: processedPayments.paymentId });
+      return rows.length > 0;
+    },
+
+    async revokeByPayment(paymentId) {
+      const rows = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.razorpayPaymentId, paymentId))
+        .limit(1);
+      const order = rows[0];
+      if (!order) return { ok: false };
+      await db.update(orders).set({ status: "refunded" }).where(eq(orders.id, order.id));
+      if (order.userId && order.productId) {
+        await db
+          .delete(entitlements)
+          .where(
+            and(
+              eq(entitlements.userId, order.userId),
+              eq(entitlements.productId, order.productId),
+            ),
+          );
+      }
+      return { ok: true };
     },
 
     async listOrders(userId) {
