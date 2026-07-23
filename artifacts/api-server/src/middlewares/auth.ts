@@ -1,7 +1,7 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
 import { eq } from "drizzle-orm";
-import { db, usersTable, teacherInvitesTable, type User } from "@workspace/db";
+import { db, usersTable, teacherInvitesTable, appInvitesTable, type User } from "@workspace/db";
 import { logActivity } from "../lib/activityLog";
 
 // Emails that are automatically provisioned as teacher + admin. Configured via
@@ -87,10 +87,35 @@ export async function requireAuth(
       req.log.warn({ err }, "Failed to fetch Clerk user for provisioning");
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     const admin = isAdminEmail(email);
-    // An admin-created teacher invite provisions this account as a teacher
-    // automatically (no role self-selection).
-    const invitedTeacher = !admin && (await consumeTeacherInvite(email));
+    let role = "unassigned";
+    let acceptedInviteRole: string | null = null;
+    let legacyTeacher = false;
+
+    if (admin) {
+      role = "teacher";
+    } else {
+      // Access is invite-only: require a matching entry on the allow-list.
+      const [invite] = normalizedEmail
+        ? await db
+            .select()
+            .from(appInvitesTable)
+            .where(eq(appInvitesTable.email, normalizedEmail))
+        : [];
+      if (invite) {
+        role = invite.role === "teacher" ? "teacher" : "student";
+        acceptedInviteRole = role;
+      } else if (await consumeTeacherInvite(email)) {
+        role = "teacher";
+        legacyTeacher = true;
+      } else {
+        // Not on the allow-list — deny access without provisioning a user.
+        res.status(403).json({ error: "not_invited" });
+        return;
+      }
+    }
+
     [user] = await db
       .insert(usersTable)
       .values({
@@ -98,8 +123,7 @@ export async function requireAuth(
         email,
         name,
         avatarUrl,
-        // Admins are auto-assigned the teacher role (no role picker needed).
-        role: admin || invitedTeacher ? "teacher" : "unassigned",
+        role,
         isAdmin: admin,
       })
       .onConflictDoNothing()
@@ -111,14 +135,25 @@ export async function requireAuth(
         .from(usersTable)
         .where(eq(usersTable.id, userId));
     } else {
+      if (acceptedInviteRole && normalizedEmail) {
+        void db
+          .update(appInvitesTable)
+          .set({ acceptedAt: new Date() })
+          .where(eq(appInvitesTable.email, normalizedEmail));
+      }
       void logActivity({
         user,
-        action: invitedTeacher ? "teacher.invite_redeemed" : "auth.provisioned",
+        action:
+          acceptedInviteRole || legacyTeacher
+            ? "invite.redeemed"
+            : "auth.provisioned",
         message: admin
           ? `New user provisioned as teacher + admin: ${email}`
-          : invitedTeacher
-            ? `Invited teacher signed in and was provisioned as teacher: ${email}`
-            : `New user provisioned: ${email || userId}`,
+          : acceptedInviteRole
+            ? `Invited ${acceptedInviteRole} joined: ${email}`
+            : legacyTeacher
+              ? `Invited teacher joined: ${email}`
+              : `New user provisioned: ${email || userId}`,
         metadata: { role: user.role, isAdmin: user.isAdmin },
       });
     }

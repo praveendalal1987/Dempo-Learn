@@ -39,13 +39,13 @@ export function LandingHero() {
           </p>
           <div className="flex flex-col items-center gap-4">
             <Link
-              href="/sign-up"
+              href="/sign-in"
               className="group inline-flex items-center justify-center gap-2 px-8 py-4 text-base font-semibold bg-white text-fuchsia-600 rounded-full shadow-xl shadow-fuchsia-900/20 transition-transform hover:scale-[1.04]"
             >
-              Get started — it's free
+              Sign in
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <p className="text-white/80 text-sm">Free for students · No credit card · Set up in seconds</p>
+            <p className="text-white/80 text-sm">Access is by invitation — sign in with the email your professor added.</p>
           </div>
         </motion.div>
       </div>

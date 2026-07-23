@@ -1,8 +1,27 @@
 import { Switch, Route, Redirect } from "wouter";
-import { useAuth } from "@clerk/react";
+import { useAuth, SignOutButton } from "@clerk/react";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MailQuestion } from "lucide-react";
 import { Shell } from "@/components/layout";
+
+function NotInvited() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-background">
+      <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-5">
+        <MailQuestion className="w-8 h-8" />
+      </div>
+      <h1 className="text-2xl font-serif font-bold text-foreground mb-2">You're not on the list yet</h1>
+      <p className="text-muted-foreground max-w-md mb-8">
+        Dempo Learn is invite-only. Ask your professor or administrator to add your email, then sign in again with that address.
+      </p>
+      <SignOutButton>
+        <button className="px-4 py-2 rounded-md border font-medium text-muted-foreground hover:text-foreground">
+          Sign out
+        </button>
+      </SignOutButton>
+    </div>
+  );
+}
 
 // Pages to import
 import { LandingPage, SignInPage, SignUpPage, RolePickerPage } from "@/pages/auth";
@@ -19,13 +38,14 @@ import CalendarPage from "@/pages/calendar";
 import SettingsPage from "@/pages/settings";
 import AdminLogsPage from "@/pages/admin-logs";
 import AdminUsersPage from "@/pages/admin-users";
+import AdminInvitesPage from "@/pages/admin-invites";
 import OversightPage from "@/pages/oversight";
 import CoordinatorPage from "@/pages/coordinator";
 import FeedbackPage from "@/pages/feedback";
 
 function ProtectedRoute({ component: Component, ...rest }: any) {
   const { isLoaded, isSignedIn } = useAuth();
-  const { data: user, isLoading } = useGetMe({ query: { enabled: !!isSignedIn, queryKey: getGetMeQueryKey() } });
+  const { data: user, isLoading, isError, error } = useGetMe({ query: { enabled: !!isSignedIn, queryKey: getGetMeQueryKey(), retry: false } });
 
   if (!isLoaded || (isSignedIn && isLoading)) {
     return (
@@ -37,6 +57,12 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 
   if (!isSignedIn) {
     return <Redirect to="/sign-in" />;
+  }
+
+  // Invite-only: a signed-in account that isn't on the allow-list gets 403.
+  if (isError) {
+    const status = (error as any)?.response?.status ?? (error as any)?.status;
+    if (status === 403) return <NotInvited />;
   }
 
   if (user && user.role === "unassigned" && rest.path !== "/role-picker") {
@@ -132,6 +158,9 @@ export function AppRouter() {
         {/* Admin */}
         <Route path="/admin/users">
           <ProtectedRoute component={AdminUsersPage} adminOnly />
+        </Route>
+        <Route path="/admin/invites">
+          <ProtectedRoute component={AdminInvitesPage} adminOnly />
         </Route>
         <Route path="/admin/logs">
           <ProtectedRoute component={AdminLogsPage} adminOnly />

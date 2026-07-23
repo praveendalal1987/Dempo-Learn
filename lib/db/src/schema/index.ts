@@ -12,3 +12,4 @@ export * from "./feedback";
 export * from "./groups";
 export * from "./coordinatorAssignments";
 export * from "./journal";
+export * from "./appInvites";

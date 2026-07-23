@@ -18,6 +18,7 @@ import oversightRouter from "./oversight";
 import feedbackRouter from "./feedback";
 import groupsRouter from "./groups";
 import journalRouter from "./journal";
+import invitesRouter from "./invites";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(oversightRouter);
 router.use(feedbackRouter);
 router.use(groupsRouter);
 router.use(journalRouter);
+router.use(invitesRouter);
 
 export default router;

@@ -13,9 +13,30 @@ import { UserCircle, Loader2 } from "lucide-react";
 export default function SettingsPage() {
   const { data: user } = useGetMe();
   const isTeacher = user?.role === "teacher";
+  const updateMe = useUpdateMe();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [name, setName] = useState("");
+  useEffect(() => {
+    if (user?.name != null) setName(user.name);
+  }, [user?.name]);
+
+  const saveName = () => {
+    updateMe.mutate(
+      { data: { name: name.trim() } },
+      {
+        onSuccess: () => {
+          toast({ title: "Profile updated" });
+          queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        },
+        onError: (e: any) =>
+          toast({ title: "Save failed", description: e?.message, variant: "destructive" }),
+      },
+    );
+  };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto w-full animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-serif font-bold text-foreground">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your account preferences.</p>
@@ -42,12 +63,21 @@ export default function SettingsPage() {
                   {user?.role === "teacher" ? "Professor" : user?.role} Account
                 </p>
                 <div className="mt-2 text-xs text-muted-foreground border px-2 py-1 rounded inline-block bg-muted/50">
-                  Name, email & avatar managed by Clerk
+                  Email & avatar are managed by your login
                 </div>
               </div>
             </div>
 
             <div className="grid gap-4 pt-4 border-t">
+              <div className="space-y-1.5">
+                <Label htmlFor="display-name">Display name</Label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input id="display-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="sm:max-w-sm" />
+                  <Button onClick={saveName} disabled={updateMe.isPending || !name.trim() || name.trim() === (user?.name ?? "")} className="shrink-0">
+                    {updateMe.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save
+                  </Button>
+                </div>
+              </div>
               <div>
                 <Label className="text-muted-foreground">Email Address</Label>
                 <div className="font-medium mt-1">{user?.email}</div>

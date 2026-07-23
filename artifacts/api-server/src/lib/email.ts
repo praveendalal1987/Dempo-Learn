@@ -20,8 +20,7 @@ export function isEmailConfigured(): boolean {
     process.env.MSG91_EMAIL_ENABLED === "true" &&
     Boolean(process.env.MSG91_AUTH_KEY) &&
     Boolean(process.env.MSG91_EMAIL_FROM) &&
-    Boolean(process.env.MSG91_EMAIL_DOMAIN) &&
-    Boolean(process.env.MSG91_EMAIL_TEMPLATE_ID)
+    Boolean(process.env.MSG91_EMAIL_DOMAIN)
   );
 }
 
@@ -39,8 +38,12 @@ export interface EmailRecipient {
  */
 export async function sendTemplateEmails(
   recipients: EmailRecipient[],
+  templateId?: string,
 ): Promise<void> {
   if (!isEmailConfigured()) return;
+
+  const tmpl = templateId || process.env.MSG91_EMAIL_TEMPLATE_ID;
+  if (!tmpl) return;
 
   const valid = recipients.filter((r) => r.email && r.email.includes("@"));
   if (valid.length === 0) return;
@@ -51,7 +54,6 @@ export async function sendTemplateEmails(
     name: process.env.MSG91_EMAIL_FROM_NAME || "Dempo Learn",
   };
   const domain = process.env.MSG91_EMAIL_DOMAIN as string;
-  const templateId = process.env.MSG91_EMAIL_TEMPLATE_ID as string;
 
   for (let i = 0; i < valid.length; i += BATCH_SIZE) {
     const batch = valid.slice(i, i + BATCH_SIZE);
@@ -62,7 +64,7 @@ export async function sendTemplateEmails(
       })),
       from,
       domain,
-      template_id: templateId,
+      template_id: tmpl,
     };
 
     try {
@@ -86,4 +88,38 @@ export async function sendTemplateEmails(
       logger.error({ err, count: batch.length }, "MSG91 email send error");
     }
   }
+}
+
+/**
+ * Best-effort invite email. Uses MSG91_INVITE_TEMPLATE_ID (falls back to the
+ * generic template). Passes variables a template can render into a nice message:
+ * name, inviter, role, app_url, invite_url, title, body.
+ */
+export async function sendInviteEmail(params: {
+  email: string;
+  name?: string | null;
+  inviterName?: string | null;
+  role: string;
+  inviteUrl: string;
+}): Promise<void> {
+  const inviter = params.inviterName || "Your professor";
+  const roleLabel = params.role === "teacher" ? "professor" : "student";
+  await sendTemplateEmails(
+    [
+      {
+        email: params.email,
+        name: params.name,
+        variables: {
+          name: params.name || "there",
+          inviter,
+          role: roleLabel,
+          app_url: process.env.APP_BASE_URL || "",
+          invite_url: params.inviteUrl,
+          title: "You're invited to Dempo Learn",
+          body: `${inviter} has invited you to join Dempo Learn as a ${roleLabel}. Set up your account to see your courses, assignments, and feedback in one place.`,
+        },
+      },
+    ],
+    process.env.MSG91_INVITE_TEMPLATE_ID || undefined,
+  );
 }

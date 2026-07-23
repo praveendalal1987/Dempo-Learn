@@ -33,6 +33,9 @@ services:
       # The API serves the built SPA from here (single origin).
       - key: WEB_DIST_DIR
         value: ./artifacts/dempo/dist/public
+      # Base URL for absolute links in invite emails / invite links.
+      - key: APP_BASE_URL
+        value: https://dempo.onrender.com
       # Secrets — set these in the Render dashboard (not committed).
       # Your teaching email — signing up with it makes you teacher + admin.
       - key: ADMIN_EMAILS
